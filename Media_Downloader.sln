@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29009.5
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Media_Downloader", "Media_Downloader.csproj", "{4FD0D170-29FE-4438-A59A-E7B56B68BF82}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4FD0D170-29FE-4438-A59A-E7B56B68BF82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FD0D170-29FE-4438-A59A-E7B56B68BF82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FD0D170-29FE-4438-A59A-E7B56B68BF82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FD0D170-29FE-4438-A59A-E7B56B68BF82}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0B0D5F87-3A50-4242-8CDC-E75C398BF57F}
+	EndGlobalSection
+EndGlobal
