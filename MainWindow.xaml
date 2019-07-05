@@ -1,78 +1,101 @@
-<Window x:Class="Media_Downloader.MainWindow"
+﻿<Window x:Class="Media_Downloader.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Media_Downloader"
         mc:Ignorable="d"
-        Title="Media Downloader" Height="450" Width="800">
-    
+        Title="Media Downloader" 
+        xml:lang="es-ES"
+        KeyUp="FuKonami_Sequencer" 
+        MinHeight="310" MinWidth="768" 
+        Height="310" Width="768"
+        d:DesignHeight="300" d:DesignWidth="768"
+        >
+
     <DockPanel>
         <Menu Name="MainMenu" IsMainMenu="True" DockPanel.Dock="Top">
             <MenuItem Header="Opciones">
                 <MenuItem Header="Actualizar"/>
             </MenuItem>
-            <MenuItem Header="Presets - Need translation">
-                <MenuItem Header="A�adir Preset"/>
+            <MenuItem Name="Menu_presets" Header="Presets">
+                <MenuItem Header="Añadir Preset" Click="AddPreset"/>
                 <MenuItem Header="Preset Example">
                     <MenuItem Header="Usar"/>
                     <MenuItem Header="Borrar"/>
                 </MenuItem>
             </MenuItem>
-
+            <MenuItem Header="Acerca de">
+                <MenuItem Header="Agradecimientos"/>
+                <MenuItem Header="Version de Youtube-dl"/>
+                <MenuItem Header="Lista completa de comandos"/>
+            </MenuItem>
+            <MenuItem Name="DevPanel" Header="OPCIONES DE DESAROLLO" Visibility="Hidden">
+                <MenuItem Header="PENSASTE QUE HABIAS ENCONTRADO UNAS OPCIONES DE DESARROLLO">
+                    <MenuItem Header="¡PERO NO! ERA YO. ¡DIO!"/>
+                </MenuItem>
+                
+            </MenuItem>
         </Menu>
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" VerticalAlignment="Center" >
             <Label Content="URL:"/>
-            <TextBox Name="txt_URL" MinWidth="500" Margin="2"/>
-            <ComboBox Name="cb_Formats" Margin="2" MinWidth="70"/>
+            <TextBox Name="txt_URL" MinWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="Click Derecho para pegar" MouseRightButtonUp="Txt_URL_MouseRightButtonUp"/>
+            <ComboBox Name="cb_Formats" Margin="2" MinWidth="70" SelectionChanged="Cb_Formats_SelectionChanged"/>
+            <RadioButton GroupName="FormatOptions" Name="rb_Video" Content="Video"  Margin="10,0,0,0" IsChecked="True" Click="Seleccion_click" VerticalAlignment="Center"/>
+            <RadioButton GroupName="FormatOptions" Name="rb_Audio" Content="Audio"  Margin="10,0,0,0" Click="Seleccion_click"  VerticalAlignment="Center"/>
 
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5"  >
-            <RadioButton GroupName="FormatOptions" Name="rb_Video" Content="Video" IsChecked="True" Click="Seleccion_click" />
-            <RadioButton GroupName="FormatOptions" Name="rb_Audio" Content="Audio" Click="Seleccion_click" Margin="10,0,0,0" />
-        </StackPanel>
-
-        <Grid Name="MainGrid" Margin="10" DockPanel.Dock="Top">
+        <Grid Name="MainGrid" Margin="10,10,10,0" DockPanel.Dock="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Vertical" >
 
                 <!--Playlist Options-->
-                <GroupBox Header="Opciones de lista" Grid.Column="0">
+                <GroupBox Header="Opciones de lista" Grid.Column="0" >
                     <StackPanel Orientation="Vertical">
-                        <CheckBox Name="isPlayList" Content="Playlist" Margin="0,5,0,3"/>
+                        <CheckBox Name="chk_isPlayList" Content="Playlist" Margin="0,5,0,3" Click="IsPlayList_Click" />
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox Name="chk_startsAt" Content="Empezar por:" Click="Chk_startsAt_Click" Margin="4"/>
-                            <TextBox Name="txt_StartsAt"  MinWidth="75" Width="Auto" Margin="4"/>
+                            <CheckBox Name="chk_startsAt" Content="Empezar por:" Click="Chk_startsAt_Click" Margin="4" />
+                            <TextBox Name="txt_StartsAt"  MinWidth="75" Width="Auto" Margin="4" KeyUp="GUI_RefrescarComando_KeyUp"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <CheckBox Name="chk_endsAt" Content="Terminar por:" Click="Chk_endsAt_Click"  Margin="4" />
-                            <TextBox Name="txt_endsAt"  MinWidth="75" Width="Auto" Margin="4"/>
+                            <TextBox Name="txt_endsAt"  MinWidth="75" Width="Auto" Margin="4" KeyUp="GUI_RefrescarComando_KeyUp"/>
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>
-
-                <!--SubtitleOptions-->
-                <GroupBox Header="Subtitulos">
-                    <StackPanel Orientation="Vertical">
-                        <CheckBox Name="chk_Addsubsfile" Content="Descargar Subtitulos" Click="Chk_Addsubsfile_Click" Margin="0,4" ToolTip="Descargar un archivo con subtitulos (.srt)"/>
-                        <CheckBox Name="chk_Embedsubs" Content="Integrar Subtitulos" Click="Chk_Addsubsfile_Click" Margin="0,4" ToolTip="Integrara los subitulos dentro del video (Solo Ciertos formatos)"/>
-                    </StackPanel>
-                </GroupBox>
             </StackPanel>
+
+            <!--Extras-->
+            <GroupBox Header="Extras" Grid.Column="1">
+                <StackPanel Orientation="Vertical">
+                    <CheckBox Name="chk_Silencioso" Content="Silencioso" ToolTip="No muestra salida" Margin="4" Click="GUI_RefrescarComando_Click"/>
+                    <CheckBox Name="chk_AddThumbFile" Content="Descargar Miniaturas" ToolTip="Se usara la miniatura del video como miniatura del archivo" Margin="4" Click="GUI_RefrescarComando_Click"/>
+                    <CheckBox Name="chk_Addsubsfile" Content="Descargar Subtitulos" Margin="4" ToolTip="Descargar un archivo con subtitulos" Click="GUI_RefrescarComando_Click"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!--Solo Video-->
+            <GroupBox Header="Integraciones" Grid.Column="2">
+                <StackPanel Orientation="Vertical">
+                    <CheckBox Name="chk_EmbedThumb" Content="Integrar Miniatura" ToolTip="Integra la minuatura dentro del propio video descargado" Margin="4" Click="GUI_RefrescarComando_Click"/>
+                    <CheckBox Name="chk_Embedsubs" Content="Integrar Subtitulos" Margin="4" ToolTip="Integrara los subitulos dentro del video (Solo Ciertos formatos)" Click="GUI_RefrescarComando_Click"/>
+                </StackPanel>
+            </GroupBox>
         </Grid>
 
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Margin="0,0,10,10">
-            <Button Content="Actualizar" Click="Btn_Actualizar" MinHeight="25" MinWidth="80" Margin="5,5,5,5"/>
             <Button Content="Descargar" Click="Btn_Descargar" MinHeight="25" MinWidth="80" Margin="5,5,5,5" />
         </StackPanel>
-        <Expander Header="(Avanzado) - Ver Comando final" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Margin="5">
-            <TextBox Name="txt_Comando" Margin="4" Text="{Binding Comando}"/>
+        <Expander Header="(Avanzado) - Ver Comando final" ExpandDirection="Up" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Margin="4,4,4,0"
+                  ToolTip="Pulsando el Boton Refrescar Comando en opciones, puedes ver (y editar) el comando que se enviara al programa"
+                  Expanded="GUI_RefrescarComando_Click">
+            <TextBox Name="txt_Comando" Margin="4" Height="20" Text="{Binding Argumentos}"/>
         </Expander>
     </DockPanel>
 </Window>
