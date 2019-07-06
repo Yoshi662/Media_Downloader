@@ -20,23 +20,33 @@ namespace Media_Downloader
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private string YoutubedlPath;
-        private string DownloadPath;
-        private List<String> listaVideo = new List<String> { ".mp4", ".avi", ".mkv", ".webm" };
-        private List<String> listaAudio = new List<String> { ".mp3", ".flac", ".aac", ".m4a", ".wav" };
+        //Relacionado con Youtube-dl
         Process Youtube_dl = new Process();
-
         private String _argumentos;
         public string Argumentos
         {
             get => _argumentos;
             set { _argumentos = value; OnPropertyChanged("Argumentos"); }
         }
+        private bool Verbose = false;
+        private bool Log = false;
+
+        //Rutas
+        private string YoutubedlPath;
+        private string DownloadPath;
+
+        //Extensiones
+        private List<String> listaVideo = new List<String> { ".mp4", ".avi", ".mkv", ".webm" };
+        private List<String> listaAudio = new List<String> { ".mp3", ".flac", ".aac", ".m4a", ".wav" };
+
+
 
         //KKode
         private int KonamiStatus = 0;
         Key[] KonamiKode = new Key[] { Key.Up, Key.Up, Key.Down, Key.Down, Key.Left, Key.Right, Key.Left, Key.Right, Key.B, Key.A };
 
+
+        //Boilerplate
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
         {
@@ -52,17 +62,38 @@ namespace Media_Downloader
             this.DataContext = this;
             StartGUI();
         }
+
+        #region chunk of Logic
+
         private void Btn_Descargar(object sender, RoutedEventArgs e)
         {
             Youtube_dl.StartInfo.FileName = YoutubedlPath + "Youtube-dl.exe";
-
+            Youtube_dl.StartInfo.RedirectStandardOutput = true;
+            Youtube_dl.StartInfo.UseShellExecute = false;
+            Youtube_dl.StartInfo.RedirectStandardInput = true;
+            //Youtube_dl.StartInfo.CreateNoWindow = true;
             //añadimos la carpeta de salida al programa
             Youtube_dl.StartInfo.Arguments = Argumentos;
 
+            String log = "";
+
             Youtube_dl.Start();
+
+            StreamReader strOutStream = Youtube_dl.StandardOutput;
+
+            if (Log)
+            {
+                while (!strOutStream.EndOfStream)
+                {
+                    log += strOutStream.ReadLine() + "\n";
+                    Youtube_dl.StandardInput.WriteLine("Here we go");
+                }
+                MessageBox.Show(log);
+                File.WriteAllText(YoutubedlPath + "Log.txt", log);
+            }
         }
 
-        #region chunk of Logic
+
         private void RefrescarComando()
         {
             Argumentos = "";
@@ -106,14 +137,14 @@ namespace Media_Downloader
 
             if (chk_Silencioso.IsChecked == true) TempCmd += " --quiet";
 
+            if (Verbose) TempCmd += " --verbose";
+
             Argumentos = TempCmd + " -o " + "\"" + DownloadPath + @"\%(title)s.%(ext)s" + "\" \"" + txt_URL.Text + "\"";
 
         }
 
         private void Btn_Actualizar(object sender, RoutedEventArgs e)
         {
-            if (!Youtube_dl.HasExited) return; //Avoid the Braketolcalipse
-
             Youtube_dl.StartInfo.FileName = YoutubedlPath + "Youtube-dl.exe";
             Youtube_dl.StartInfo.Arguments = "-U";
             Youtube_dl.Start();
@@ -139,6 +170,9 @@ namespace Media_Downloader
 
         }
 
+        private void dev_addVerbose(object sender, RoutedEventArgs e) => Verbose = true;
+
+        private void dev_addLog(object sender, RoutedEventArgs e) => Log = true;
         #endregion
 
         #region GUI RESPONSIVENESS
@@ -215,7 +249,7 @@ namespace Media_Downloader
         {
             try
             {
-                if (cb_Formats.SelectedItem.Equals(".avi"))
+                if (cb_Formats.SelectedItem.Equals(".avi") && rb_Video.IsChecked == true)
                 {
                     chk_Embedsubs.IsChecked = false;
                     chk_Embedsubs.IsEnabled = false;
@@ -249,6 +283,8 @@ namespace Media_Downloader
             txt_URL.Text = Clipboard.GetText();
             RefrescarComando();
         }
+
+
 
 
         #endregion
