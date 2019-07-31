@@ -13,12 +13,12 @@
         d:DesignHeight="300" d:DesignWidth="768"
         >
 
-    <DockPanel>
+    <DockPanel Name="MainPanel">
         <Menu Name="MainMenu" IsMainMenu="True" DockPanel.Dock="Top">
             <MenuItem Header="Opciones">
-                <MenuItem Header="Actualizar"/>
+                <MenuItem Header="Actualizar" Click="MenuItem_ActualizarYTdl"/>
             </MenuItem>
-            <MenuItem Name="Menu_presets" Header="Presets">
+            <MenuItem Name="Menu_presets" Header="Presets" Visibility="Collapsed" IsEnabled="False" ToolTip="TODO">
                 <MenuItem Header="Añadir Preset" Click="AddPreset"/>
                 <MenuItem Header="Preset Example">
                     <MenuItem Header="Usar"/>
@@ -26,20 +26,21 @@
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="Acerca de">
-                <MenuItem Header="Agradecimientos"/>
-                <MenuItem Header="Version de Youtube-dl"/>
-                <MenuItem Header="Lista completa de comandos"/>
+                <MenuItem Header="Version" Click="MenuItem_CheckVersion"/>
+                <MenuItem Header="Sitios Soportados" Click="MenuItem_SitiosSoportados"/>
             </MenuItem>
             <MenuItem Name="DevPanel" Header="OPCIONES DE DESAROLLO" Visibility="Hidden"> <!--TODO Ocultar esto para version final-->
-                <MenuItem Header="Activar Verbose" Click="dev_addVerbose" />
-                <MenuItem Header="Activar Log" Click="dev_addLog" />
+                
+                <MenuItem Name="chk_Verbose" Header="Activar Verbose" Click="dev_addVerbose" />
+                <MenuItem Name="chk_Log" Header="Activar Log" Click="dev_addLog" />
+                <MenuItem Header="Lista completa de comandos" Click="MenuItem_ListarComandos"/>
             </MenuItem>
         </Menu>
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" VerticalAlignment="Center" >
             <Label Content="URL:"/>
             <TextBox Name="txt_URL" MinWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="Click Derecho para pegar" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" />
-            <ComboBox Name="cb_Formats" Margin="2" MinWidth="70" SelectionChanged="Cb_Formats_SelectionChanged"/>
+            <ComboBox Name="cb_Formats" Margin="2" MinWidth="70"  DropDownClosed="Cb_Formats_DropDownClosed"/>
             <RadioButton GroupName="FormatOptions" Name="rb_Video" Content="Video"  Margin="10,0,0,0" IsChecked="True" Click="Seleccion_click" VerticalAlignment="Center"/>
             <RadioButton GroupName="FormatOptions" Name="rb_Audio" Content="Audio"  Margin="10,0,0,0" Click="Seleccion_click"  VerticalAlignment="Center"/>
 
@@ -81,8 +82,8 @@
             <!--Solo Video-->
             <GroupBox Header="Integraciones" Grid.Column="2">
                 <StackPanel Orientation="Vertical">
-                    <CheckBox Name="chk_EmbedThumb" Content="Integrar Miniatura" ToolTip="Integra la minuatura dentro del propio video descargado" Margin="4" Click="GUI_RefrescarComando_Click"/>
-                    <CheckBox Name="chk_Embedsubs" Content="Integrar Subtitulos" Margin="4" ToolTip="Integrara los subitulos dentro del video (Solo Ciertos formatos)" Click="GUI_RefrescarComando_Click"/>
+                    <CheckBox Name="chk_EmbedThumb" Content="Integrar Miniatura" ToolTip="Integra la minuatura dentro del propio video descargado (Solo MP3 y MP4)" Margin="4" Click="GUI_RefrescarComando_Click"/>
+                    <CheckBox Name="chk_Embedsubs" Content="Integrar Subtitulos" Margin="4" ToolTip="Integrara los subitulos dentro del video (Solo Ciertos formatos)" Click="Chk_Embedsubs_Click"/>
                 </StackPanel>
             </GroupBox>
         </Grid>
