@@ -16,7 +16,11 @@
     <DockPanel Name="MainPanel">
         <Menu Name="MainMenu" IsMainMenu="True" DockPanel.Dock="Top">
             <MenuItem Header="Opciones">
-                <MenuItem Header="Actualizar" Click="MenuItem_ActualizarYTdl"/>
+                <MenuItem Header="Actualizar" Click="MenuItem_ActualizarYTdl">
+                    <MenuItem.Icon>
+                        <Image Source="Resources\update.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <MenuItem Name="Menu_presets" Header="Presets" Visibility="Collapsed" IsEnabled="False" ToolTip="TODO">
                 <MenuItem Header="Añadir Preset" Click="AddPreset"/>
@@ -27,12 +31,16 @@
             </MenuItem>
             <MenuItem Header="Acerca de">
                 <MenuItem Header="Version" Click="MenuItem_CheckVersion"/>
-                <MenuItem Header="Sitios Soportados" Click="MenuItem_SitiosSoportados"/>
+                <MenuItem Header="Sitios Soportados" Click="MenuItem_SitiosSoportados" ToolTip="Abrira un explorador web">
+                    <MenuItem.Icon>
+                        <Image Source="Resources\external-link.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <MenuItem Name="DevPanel" Header="OPCIONES DE DESAROLLO" Visibility="Hidden"> <!--TODO Ocultar esto para version final-->
                 
-                <MenuItem Name="chk_Verbose" Header="Activar Verbose" Click="dev_addVerbose" />
-                <MenuItem Name="chk_Log" Header="Activar Log" Click="dev_addLog" />
+                <MenuItem Name="chk_Verbose" Header="Activar Verbose" Click="dev_addVerbose" IsChecked="{Binding Verbose}"/>
+                <MenuItem Name="chk_Log" Header="Activar Log" Click="dev_addLog" IsChecked="{Binding Log}"/>
                 <MenuItem Header="Lista completa de comandos" Click="MenuItem_ListarComandos"/>
             </MenuItem>
         </Menu>
@@ -89,7 +97,7 @@
         </Grid>
 
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Margin="0,0,10,10">
-            <Button Content="Descargar" Click="Btn_Descargar" MinHeight="25" MinWidth="80" Margin="5,5,5,5" />
+            <Button Name="Btn_Descargar" Content="Descargar" Click="Btn_Descargar_Click" MinHeight="25" MinWidth="80" Margin="5,5,5,5" />
         </StackPanel>
         <Expander Header="(Avanzado) - Ver Comando final" ExpandDirection="Up" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Margin="4,4,4,0"
                   ToolTip="Pulsando el Boton Refrescar Comando en opciones, puedes ver (y editar) el comando que se enviara al programa"

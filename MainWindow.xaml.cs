@@ -18,42 +18,70 @@ using System.Windows.Shapes;
 
 namespace Media_Downloader
 {
-     /* Video con subtitulos https://www.youtube.com/watch?v=YU4-LFAK7t0 (Introduction to the Overwatch WorkShop)
-     * Video sin subtitulos https://www.youtube.com/watch?v=-8rTfTm6JN0 (BAKURETSU BAKURESTU)
-     * 
-     * Añadir
-     * Presets
-     * Sitios soportados
-     */
-
-
+    /* Video con subtitulos https://www.youtube.com/watch?v=YU4-LFAK7t0 (Introduction to the Overwatch WorkShop)
+    * Video sin subtitulos https://www.youtube.com/watch?v=-8rTfTm6JN0 (BAKURETSU BAKURESTU)
+    * TODO:
+    * Presets
+    */
 
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+
+        #region Arguments, Fields and other pseudostatic thingies
+        //Version
+        private readonly String CurrentVersion = "0.4.1b";
+
         //Youtube-dl
         Process Youtube_dl = new Process();
-        private String _argumentos;
+
         public string Argumentos
         {
             get => _argumentos;
             set { _argumentos = value; OnPropertyChanged("Argumentos"); }
         }
+        private String _argumentos;
+        
+        public bool DevMode
+        {
+            get => _devMode;
+            set
+            {
+                _devMode = value; OnPropertyChanged("DevMode");
+                DevPanel.Visibility = value ? Visibility.Visible : Visibility.Hidden;
 
-        private bool DevMode = false;
-        private bool Verbose = false;
-        private bool Log = false;
+                /* Chicos. No hagais esto, es jodido de entender y no tiene sentido
+                   // _ = value ? DevPanel.Visibility = Visibility.Visible : DevPanel.Visibility = Visibility.Hidden; Horrible
+                   if (value) DevPanel.Visibility = Visibility.Visible; else DevPanel.Visibility = Visibility.Hidden; Funcional
+                */
 
+
+            }
+        }
+        private bool _devMode = false;
+
+        public bool Verbose
+        {
+            get => _verbose;
+            set { _verbose = value; OnPropertyChanged("Verbose"); }
+        }
+        private bool _verbose = false;
+
+        public bool Log
+        {
+            get => _log;
+            set { _log = value; OnPropertyChanged("Log"); }
+        }
+        private bool _log = false;
 
         //Rutas
         private string YoutubedlPath;
         private string DownloadPath;
+        private string MainPath;
 
         //Extensiones
         private List<String> listaVideo = new List<String> { ".mp4", ".avi", ".mkv", ".webm" };
         private List<String> listaAudio = new List<String> { ".mp3", ".flac", ".aac", ".m4a", ".wav" };
         private String extensionSeleccionada = "";
-
-
 
         //KKode
         private int KonamiStatus = 0;
@@ -67,55 +95,97 @@ namespace Media_Downloader
             PropertyChangedEventHandler handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }
+        #endregion
 
-        //MAIN
+        #region big chunk of Logic
         public MainWindow()
         {
             YoutubedlPath = AppDomain.CurrentDomain.BaseDirectory + @"Youtube-dl\";
             DownloadPath = AppDomain.CurrentDomain.BaseDirectory + @"Descargas";
+            MainPath = AppDomain.CurrentDomain.BaseDirectory;
             InitializeComponent();
             this.DataContext = this;
             Start();
         }
 
-        #region big chunk of Logic
-
-        private void Btn_Descargar(object sender, RoutedEventArgs e)
+        private void Btn_Descargar_Click(object sender, RoutedEventArgs e)
         {
             Youtube_dl.StartInfo.FileName = YoutubedlPath + "Youtube-dl.exe";
-            StreamReader strOutStream;
-
-            if (DevMode)
-            {
-                Youtube_dl.StartInfo.RedirectStandardOutput = true;
-                Youtube_dl.StartInfo.UseShellExecute = false;
-            }
-            else
-            {
-                Youtube_dl.StartInfo.RedirectStandardOutput = false;
-                Youtube_dl.StartInfo.UseShellExecute = true;
-                Youtube_dl.StartInfo.CreateNoWindow = true;
-            }
-
-
-
+            Refescar_STARTINFO();
             //añadimos la carpeta de salida al programa
             Youtube_dl.StartInfo.Arguments = Argumentos;
 
-            String log = "";
 
+            Btn_Descargar.IsEnabled = false;
             Youtube_dl.Start();
+            Youtube_dl.WaitForExit();
+            Btn_Descargar.IsEnabled = true;
 
+            if (Youtube_dl.ExitCode > 0 && DevMode != false) //Habemus fallo (Y al estar DevMode Activado. Pensamos que no podria ser normal)
+            {
+                MessageBoxResult resultado = MessageBox.Show("Ha habido un fallo en la ejecucion del programa." +
+                "\n¿Quiere volver a intentar la descarga y guardar el resultado para poder revisarlo mas tarde?",
+                "Error en la descarga.",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Error);
+
+                if (resultado.Equals(MessageBoxResult.Yes))
+                {
+                    Log = true; DevMode = true; Verbose = true; //Habilitamos todas las opciones de debug/log
+                    RefrescarComando(); Refescar_STARTINFO();
+                    Youtube_dl.Start();
+                }
+            }
 
             if (Log)
             {
+                String log = "", errlog = "";
+                StreamReader strOutStream, strErrStream;
+                String LogFile = MainPath + "Log.txt";
+                //Podria encapsular esto en un metodo, pero para dos veces que se va a usar.
+
+
+
+                //Get Standard Output
                 strOutStream = Youtube_dl.StandardOutput;
                 while (!strOutStream.EndOfStream)
                 {
                     log += strOutStream.ReadLine() + "\n";
                 }
-                MessageBox.Show(log);
-                File.WriteAllText(YoutubedlPath + "Log.txt", log);
+
+                //Get ErrorOutput
+                strErrStream = Youtube_dl.StandardError;
+                while (!strErrStream.EndOfStream)
+                {
+                    errlog += strErrStream.ReadLine() + "\n";
+                }
+                File.WriteAllText(LogFile, errlog);
+
+                //Write to File
+                String SalidaLog = "------------------------------------------------------" +
+                    "\n" + DateTime.Now.ToString() +
+                    "\n\n" + errlog +
+                    "\n" + log;
+
+                MessageBox.Show(SalidaLog);
+                File.WriteAllText(LogFile, SalidaLog);
+            }
+        }
+
+        private void Refescar_STARTINFO()
+        {
+            if (DevMode)
+            {
+                Youtube_dl.StartInfo.RedirectStandardOutput = true;
+                Youtube_dl.StartInfo.RedirectStandardError = true;
+                Youtube_dl.StartInfo.UseShellExecute = false;
+                Youtube_dl.StartInfo.CreateNoWindow = true;
+            }
+            else
+            {
+                Youtube_dl.StartInfo.RedirectStandardOutput = false;
+                Youtube_dl.StartInfo.UseShellExecute = true;
+                Youtube_dl.StartInfo.CreateNoWindow = false;
             }
         }
         private void RefrescarComando()
@@ -169,12 +239,7 @@ namespace Media_Downloader
             Argumentos = TempCmd + " -o " + "\"" + DownloadPath + @"\%(title)s.%(ext)s" + "\" \"" + txt_URL.Text + "\"";
 
         }
-        private void Btn_Actualizar(object sender, RoutedEventArgs e)
-        {
-            Youtube_dl.StartInfo.FileName = YoutubedlPath + "Youtube-dl.exe";
-            Youtube_dl.StartInfo.Arguments = "-U";
-            Youtube_dl.Start();
-        }
+
         private void AddPreset(object sender, RoutedEventArgs e)
         {
             //TODO BIG CHUNK OF CODE
@@ -188,7 +253,6 @@ namespace Media_Downloader
 
             if (KonamiStatus == KonamiKode.Length)
             {
-                DevPanel.Visibility = Visibility.Visible;
                 KonamiStatus = 0;
                 DevMode = true;
             }
@@ -196,19 +260,17 @@ namespace Media_Downloader
         }
         private void dev_addVerbose(object sender, RoutedEventArgs e)
         {
-            chk_Verbose.IsChecked = !chk_Verbose.IsChecked;
-            Verbose = chk_Verbose.IsChecked;
+            Verbose = !Verbose;
             RefrescarComando();
         }
         private void dev_addLog(object sender, RoutedEventArgs e)
         {
-            chk_Log.IsChecked = !chk_Log.IsChecked;
-            Log = chk_Log.IsChecked;
+            Log = !Log;
 
             RefrescarComando();
-           if(Log) MessageBox.Show("Ahora al descargar videos, no aparecera la ventana.\nPara ver dicha informacion, " +
-                "mire el fichero de log ubicado en\n" + YoutubedlPath + "\\log.txt"
-                +"\n\nAlso tengo que hacer esto mas bonico");
+            if (Log) MessageBox.Show("Ahora al descargar videos, no aparecera la ventana.\nPara ver dicha informacion, " +
+                  "mire el fichero de log ubicado en\n" + YoutubedlPath + "\\log.txt"
+                  + "\n\nAlso tengo que hacer esto mas bonico");
         }
         private void MenuItem_ActualizarYTdl(object sender, RoutedEventArgs e)
         {
@@ -226,7 +288,7 @@ namespace Media_Downloader
         private void MenuItem_CheckVersion(object sender, RoutedEventArgs e)
         {
 
-            String salida = "Media_Downloader v0.3b" + "\n\n";
+            String salida = $"Media_Downloader v{CurrentVersion}" + "\n\n";
 
             //Youtube-dl GetLine
             salida += "Version Youtube-dl: " + GetLine(YoutubedlPath + "Youtube-dl.exe", "--version") + "\n\n";
@@ -235,7 +297,7 @@ namespace Media_Downloader
             //AVCONV version
             salida += GetLine(YoutubedlPath + "avconv.exe", "-version");
 
-            MessageBox.Show(salida, "Versiones",MessageBoxButton.OK,MessageBoxImage.Information);
+            MessageBox.Show(salida, "Versiones", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         private void MenuItem_ListarComandos(object sender, RoutedEventArgs e) //TODO
         {
@@ -432,9 +494,10 @@ namespace Media_Downloader
                 MessageBox.Show("El programa no puede encontrar la carpeta con todos los archivos necesarios para funcionar." +
                     "\nAsegurate que la carpeta \"youtube-dl\" esta en la mismo directorio que este programa.", "Faltan Archivos", MessageBoxButton.OK, MessageBoxImage.Error);
                 MainPanel.IsEnabled = false;
+                Environment.Exit(1);
             }
 
-            if(!Directory.Exists(DownloadPath)) Directory.CreateDirectory(DownloadPath);
+            if (!Directory.Exists(DownloadPath)) Directory.CreateDirectory(DownloadPath);
 
 
 
@@ -459,8 +522,5 @@ namespace Media_Downloader
         }
 
         #endregion
-
-        
     }
 }
-
