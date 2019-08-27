@@ -22,7 +22,7 @@
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Name="Menu_presets" Header="Presets" Visibility="Collapsed" IsEnabled="False" ToolTip="TODO">
+            <MenuItem Name="Menu_presets" Header="Presets">
                 <MenuItem Header="Añadir Preset" Click="AddPreset"/>
                 <MenuItem Header="Preset Example">
                     <MenuItem Header="Usar"/>
@@ -39,8 +39,8 @@
             </MenuItem>
             <MenuItem Name="DevPanel" Header="OPCIONES DE DESAROLLO" Visibility="Hidden"> <!--TODO Ocultar esto para version final-->
                 
-                <MenuItem Name="chk_Verbose" Header="Activar Verbose" Click="dev_addVerbose" IsChecked="{Binding Verbose}"/>
-                <MenuItem Name="chk_Log" Header="Activar Log" Click="dev_addLog" IsChecked="{Binding Log}"/>
+                <MenuItem Header="Activar Verbose"  IsChecked="{Binding Verbose}"/>
+                <MenuItem Header="Activar Log" IsChecked="{Binding Log}"/>
                 <MenuItem Header="Lista completa de comandos" Click="MenuItem_ListarComandos"/>
             </MenuItem>
         </Menu>
@@ -49,8 +49,8 @@
             <Label Content="URL:"/>
             <TextBox Name="txt_URL" MinWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="Click Derecho para pegar" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" />
             <ComboBox Name="cb_Formats" Margin="2" MinWidth="70"  DropDownClosed="Cb_Formats_DropDownClosed"/>
-            <RadioButton GroupName="FormatOptions" Name="rb_Video" Content="Video"  Margin="10,0,0,0" IsChecked="True" Click="Seleccion_click" VerticalAlignment="Center"/>
-            <RadioButton GroupName="FormatOptions" Name="rb_Audio" Content="Audio"  Margin="10,0,0,0" Click="Seleccion_click"  VerticalAlignment="Center"/>
+            <RadioButton GroupName="FormatOptions" Name="rb_Video" Content="Video"  Margin="10,0,0,0" IsChecked="{Binding IsVideo}"  VerticalAlignment="Center"/>
+            <RadioButton GroupName="FormatOptions" Name="rb_Audio" Content="Audio"  Margin="10,0,0,0"  IsChecked="{Binding IsAudio}"   VerticalAlignment="Center"/>
 
         </StackPanel>
 
@@ -65,14 +65,15 @@
                 <!--Playlist Options-->
                 <GroupBox Header="Opciones de lista" Grid.Column="0" >
                     <StackPanel Orientation="Vertical">
-                        <CheckBox Name="chk_isPlayList" Content="Playlist" Margin="0,5,0,3" Click="IsPlayList_Click" />
+                        <CheckBox  Content="Playlist" Margin="0,5,0,3" IsChecked="{Binding IsPlaylist}"  />
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox Name="chk_startsAt" Content="Empezar por:" Click="Chk_startsAt_Click" Margin="4" />
-                            <TextBox Name="txt_StartsAt"  MinWidth="75" Width="Auto" Margin="4" KeyUp="GUI_RefrescarComando_KeyUp"/>
+                            <!--Los Text de las Textbox se convierten a Int en el propio codigo-->
+                            <CheckBox Name="chk_startsAt" Content="Empezar por:" IsChecked="{Binding StartsAt}" Margin="4" />
+                            <TextBox Name="txt_startsAt" Text="{Binding StartsAtInt, UpdateSourceTrigger=PropertyChanged}" MinWidth="75" Width="Auto" Margin="4" KeyUp="GUI_RefrescarComando_KeyUp"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox Name="chk_endsAt" Content="Terminar por:" Click="Chk_endsAt_Click"  Margin="4" />
-                            <TextBox Name="txt_endsAt"  MinWidth="75" Width="Auto" Margin="4" KeyUp="GUI_RefrescarComando_KeyUp"/>
+                            <CheckBox Name="chk_endsAt" Content="Terminar por:" IsChecked="{Binding EndsAt}" Margin="4" />
+                            <TextBox Name="txt_endsAt" Text="{Binding EndsAtInt, UpdateSourceTrigger=PropertyChanged}" MinWidth="75" Width="Auto" Margin="4" KeyUp="GUI_RefrescarComando_KeyUp"/>
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>
@@ -81,17 +82,17 @@
             <!--Extras-->
             <GroupBox Header="Extras" Grid.Column="1">
                 <StackPanel Orientation="Vertical">
-                    <CheckBox Name="chk_Silencioso" Content="Silencioso" ToolTip="No muestra salida" Margin="4" Click="GUI_RefrescarComando_Click"/>
-                    <CheckBox Name="chk_AddThumbFile" Content="Descargar Miniaturas" ToolTip="Se usara la miniatura del video como miniatura del archivo" Margin="4" Click="GUI_RefrescarComando_Click"/>
-                    <CheckBox Name="chk_Addsubsfile" Content="Descargar Subtitulos" Margin="4" ToolTip="Descargar un archivo con subtitulos" Click="GUI_RefrescarComando_Click"/>
+                    <CheckBox IsChecked="{Binding Quiet}" Content="Silencioso" ToolTip="No muestra salida" Margin="4" />
+                    <CheckBox IsChecked="{Binding Download_thumbnails}" Content="Descargar Miniaturas" ToolTip="Se usara la miniatura del video como miniatura del archivo" Margin="4" />
+                    <CheckBox IsChecked="{Binding Download_subs}" Content="Descargar Subtitulos" Margin="4" ToolTip="Descargar un archivo con subtitulos" />
                 </StackPanel>
             </GroupBox>
 
             <!--Solo Video-->
             <GroupBox Header="Integraciones" Grid.Column="2">
                 <StackPanel Orientation="Vertical">
-                    <CheckBox Name="chk_EmbedThumb" Content="Integrar Miniatura" ToolTip="Integra la minuatura dentro del propio video descargado (Solo MP3 y MP4)" Margin="4" Click="GUI_RefrescarComando_Click"/>
-                    <CheckBox Name="chk_Embedsubs" Content="Integrar Subtitulos" Margin="4" ToolTip="Integrara los subitulos dentro del video (Solo Ciertos formatos)" Click="Chk_Embedsubs_Click"/>
+                    <CheckBox IsChecked="{Binding Embed_thumbnails}" Name="chk_EmbedThumb" Content="Integrar Miniatura" ToolTip="Integra la minuatura dentro del propio video descargado (Solo MP3 y MP4)" Margin="4" />
+                    <CheckBox IsChecked="{Binding Embed_subs}" Name="chk_Embedsubs" Content="Integrar Subtitulos" Margin="4" ToolTip="Integrara los subitulos dentro del video (Solo Ciertos formatos)"/>
                 </StackPanel>
             </GroupBox>
         </Grid>

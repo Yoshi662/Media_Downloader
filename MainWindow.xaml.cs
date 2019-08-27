@@ -22,6 +22,14 @@ namespace Media_Downloader
     * Video sin subtitulos https://www.youtube.com/watch?v=-8rTfTm6JN0 (BAKURETSU BAKURESTU)
     * TODO:
     * Presets
+    * 
+    * Cambiar todos los NAMES del XAML a bindings. Arreglar sus dependencias con los Click"Nombre_metodo" y añadir todos los bindins posibiles.
+    * Luego hara falta refactorizar todo para usar las propiedades de este archivo
+    * Y DESPUES SOLO TENDRE QUE HACER LAS PRESETS. (Y la globalizacion)
+    * 
+    * hacer un poco de cast en los setters de StartsAtInt y EndsAtInt
+    * 
+    * 
     */
 
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -29,7 +37,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.4.1b";
+        private readonly String CurrentVersion = "0.4.2b";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -40,7 +48,7 @@ namespace Media_Downloader
             set { _argumentos = value; OnPropertyChanged("Argumentos"); }
         }
         private String _argumentos;
-        
+
         public bool DevMode
         {
             get => _devMode;
@@ -53,8 +61,6 @@ namespace Media_Downloader
                    // _ = value ? DevPanel.Visibility = Visibility.Visible : DevPanel.Visibility = Visibility.Hidden; Horrible
                    if (value) DevPanel.Visibility = Visibility.Visible; else DevPanel.Visibility = Visibility.Hidden; Funcional
                 */
-
-
             }
         }
         private bool _devMode = false;
@@ -62,16 +68,132 @@ namespace Media_Downloader
         public bool Verbose
         {
             get => _verbose;
-            set { _verbose = value; OnPropertyChanged("Verbose"); }
+            set
+            {
+                _verbose = value; OnPropertyChanged("Verbose");
+            }
         }
         private bool _verbose = false;
 
         public bool Log
         {
             get => _log;
-            set { _log = value; OnPropertyChanged("Log"); }
+            set
+            {
+                _log = value; OnPropertyChanged("Log");
+                if (Log) MessageBox.Show("Ahora al descargar videos, no aparecera la ventana.\nPara ver dicha informacion, " +
+                      "mire el fichero de log ubicado en\n" + YoutubedlPath + "\\log.txt"
+                      + "\n\nAlso tengo que hacer esto mas bonico");
+            }
         }
         private bool _log = false;
+
+        public bool IsPlaylist
+        {
+            get => isPlaylist; set
+            {
+                isPlaylist = value; OnPropertyChanged("IsPlaylist");
+                if (value)
+                {
+                    chk_startsAt.IsEnabled = true;
+                    chk_endsAt.IsEnabled = true;
+                }
+                else
+                {
+                    chk_startsAt.IsEnabled = false;
+                    chk_startsAt.IsChecked = false;
+
+                    txt_startsAt.IsEnabled = false;
+                    txt_startsAt.Text = "";
+
+                    chk_endsAt.IsEnabled = false;
+                    chk_endsAt.IsChecked = false;
+
+                    txt_endsAt.IsEnabled = false;
+                    txt_endsAt.Text = "";
+                }
+            }
+        }
+        private bool isPlaylist;
+
+        public bool StartsAt
+        {
+            get => startsAt; set
+            {
+                startsAt = value; OnPropertyChanged("StartsAt");
+                if (value)
+                {
+                    txt_startsAt.IsEnabled = true;
+                    txt_startsAt.Text = "";
+                }
+                else
+                {
+                    txt_startsAt.IsEnabled = false;
+                    StartsAtInt = 0;
+                }
+
+            }
+        }
+        private bool startsAt;
+
+        public bool EndsAt
+        {
+            get => endsAt; set
+            {
+                endsAt = value; OnPropertyChanged("EndsAt");
+                if (value)
+                {
+                    txt_endsAt.IsEnabled = true;
+                    txt_endsAt.Text = "";
+                }
+                else
+                {
+                    txt_endsAt.IsEnabled = false;
+                    EndsAtInt = 0;
+                }
+
+            }
+        }
+        private bool endsAt;
+
+        public int StartsAtInt { get => startsAtInt; set { startsAtInt = value; OnPropertyChanged("StartsAtInt"); } }
+        private int startsAtInt;
+
+        public int EndsAtInt { get => endsAtInt; set { endsAtInt = value; OnPropertyChanged("EndsAtInt"); } }
+        private int endsAtInt;
+
+        public bool Quiet { get => quiet; set { quiet = value; OnPropertyChanged("Quiet"); } }
+        private bool quiet;
+
+        public bool Download_thumbnails { get => download_thumbnails; set { download_thumbnails = value; OnPropertyChanged("Download_thumbnails"); } }
+        private bool download_thumbnails;
+
+        public bool Download_subs { get => download_subs; set { download_subs = value; OnPropertyChanged("Download_subs"); } }
+        private bool download_subs;
+
+        public bool Embed_thumbnails
+        {
+            get => embed_thumbnails; set
+            {
+                embed_thumbnails = value; OnPropertyChanged("Embed_thumbnails");
+                Download_thumbnails = value;
+            }
+        }
+        private bool embed_thumbnails;
+
+        public bool Embed_subs { get => embed_subs; set { embed_subs = value; OnPropertyChanged("Embed_subs"); } }
+        private bool embed_subs;
+
+        public string Extension { get => extension; set { extension = value; OnPropertyChanged("Extension"); } }
+        private string extension;
+
+        public bool IsVideo { get => isVideo; set { isVideo = value; OnPropertyChanged("IsVideo"); Seleccion_click(); } }
+        private bool isVideo;
+
+        public bool IsAudio { get => isAudio; set { isAudio = value; OnPropertyChanged("IsAudio"); Seleccion_click(); } }
+        private bool isAudio;
+
+
 
         //Rutas
         private string YoutubedlPath;
@@ -94,6 +216,12 @@ namespace Media_Downloader
         {
             PropertyChangedEventHandler handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+
+            //El metodo RefrescarComando escribe sobre la Propiedad Argumentos. Que tiene un OnPropertyChanged, y vuelta a empezar.
+            if (!propertyName.Equals("Argumentos"))
+            {
+                RefrescarComando();
+            }
         }
         #endregion
 
@@ -144,8 +272,6 @@ namespace Media_Downloader
                 String LogFile = MainPath + "Log.txt";
                 //Podria encapsular esto en un metodo, pero para dos veces que se va a usar.
 
-
-
                 //Get Standard Output
                 strOutStream = Youtube_dl.StandardOutput;
                 while (!strOutStream.EndOfStream)
@@ -190,17 +316,18 @@ namespace Media_Downloader
         }
         private void RefrescarComando()
         {
-            Argumentos = "";
+            //FIXME when the storm is all over
+
             String TempCmd = "";
             //BEHOLD THE IF WALL
 
             //Listas (o no)
-            if (chk_isPlayList.IsChecked == true)
+            if (IsPlaylist)
             {
                 TempCmd += " --yes-playlist";
 
-                if (chk_startsAt.IsChecked == true) TempCmd += " --playlist-start " + txt_StartsAt.Text; //TODO Checkear nº
-                if (chk_endsAt.IsChecked == true) TempCmd += " --playlist-end " + txt_endsAt.Text; //TODO Checkear nº
+                if (StartsAt) TempCmd += " --playlist-start " + StartsAtInt;
+                if (EndsAt) TempCmd += " --playlist-end " + EndsAtInt;
             }
             else
             {
@@ -209,7 +336,7 @@ namespace Media_Downloader
 
             //Formato
             extensionSeleccionada = cb_Formats.Text.TrimStart('.');
-            if (rb_Audio.IsChecked == true)
+            if (IsAudio)
             {
 
                 TempCmd += " -x";
@@ -222,17 +349,17 @@ namespace Media_Downloader
 
 
             //embed - thumbs - subs                                                                                     >dubs
-            if (chk_Addsubsfile.IsChecked == true) TempCmd += " --all-subs";
+            if (Download_subs) TempCmd += " --all-subs";
 
-            if (chk_AddThumbFile.IsChecked == true) TempCmd += " --write-thumbnail";
+            if (Download_thumbnails) TempCmd += " --write-thumbnail";
 
-            if (chk_Embedsubs.IsChecked == true) TempCmd += " --embed-subs";
+            if (Embed_subs) TempCmd += " --embed-subs";
 
-            if (chk_EmbedThumb.IsChecked == true) TempCmd += " --embed-thumbnail";
+            if (Embed_thumbnails) TempCmd += " --embed-thumbnail";
 
             //extra
 
-            if (chk_Silencioso.IsChecked == true) TempCmd += " --quiet";
+            if (Quiet) TempCmd += " --quiet";
 
             if (Verbose) TempCmd += " --verbose";
 
@@ -258,20 +385,8 @@ namespace Media_Downloader
             }
 
         }
-        private void dev_addVerbose(object sender, RoutedEventArgs e)
-        {
-            Verbose = !Verbose;
-            RefrescarComando();
-        }
-        private void dev_addLog(object sender, RoutedEventArgs e)
-        {
-            Log = !Log;
 
-            RefrescarComando();
-            if (Log) MessageBox.Show("Ahora al descargar videos, no aparecera la ventana.\nPara ver dicha informacion, " +
-                  "mire el fichero de log ubicado en\n" + YoutubedlPath + "\\log.txt"
-                  + "\n\nAlso tengo que hacer esto mas bonico");
-        }
+
         private void MenuItem_ActualizarYTdl(object sender, RoutedEventArgs e)
         {
             Youtube_dl.StartInfo = new ProcessStartInfo
@@ -370,75 +485,26 @@ namespace Media_Downloader
         #endregion
 
         #region GUI RESPONSIVENESS
-        private void Seleccion_click(object sender, RoutedEventArgs e)
-        { //Seguro que hay formas mejores de hacer esto.
-            if (rb_Video.IsChecked == true)
+        private void Seleccion_click()
+        { //Seguro que hay formas mejores de hacer esto. SEGURISIMO
+            if (isVideo)
             {
                 cb_Formats.ItemsSource = listaVideo;
                 cb_Formats.SelectedItem = listaVideo[0];
                 chk_Embedsubs.IsEnabled = true;
-                //chk_EmbedThumb.IsEnabled = true;
             }
             else
             {
                 cb_Formats.ItemsSource = listaAudio;
                 cb_Formats.SelectedItem = listaAudio[0];
                 chk_Embedsubs.IsEnabled = false;
-                //chk_EmbedThumb.IsEnabled = false;
                 chk_Embedsubs.IsChecked = false;
-                chk_EmbedThumb.IsChecked = false;
             }
             RefrescarComando();
         }
-        private void Chk_startsAt_Click(object sender, RoutedEventArgs e)
-        {
-            if (chk_startsAt.IsChecked == true)
-            {
-                txt_StartsAt.IsEnabled = true;
-            }
-            else
-            {
-                txt_StartsAt.IsEnabled = false;
-                txt_StartsAt.Text = "";
-            }
-            RefrescarComando();
-        }
-        private void Chk_endsAt_Click(object sender, RoutedEventArgs e)
-        {
-            if (chk_endsAt.IsChecked == true)
-            {
-                txt_endsAt.IsEnabled = true;
-            }
-            else
-            {
-                txt_endsAt.IsEnabled = false;
-                txt_endsAt.Text = "";
-            }
-            RefrescarComando();
-        }
-        private void IsPlayList_Click(object sender, RoutedEventArgs e)
-        {
-            if (chk_isPlayList.IsChecked == true)
-            {
-                chk_startsAt.IsEnabled = true;
-                chk_endsAt.IsEnabled = true;
-            }
-            else
-            {
-                chk_startsAt.IsEnabled = false;
-                chk_startsAt.IsChecked = false;
 
-                txt_StartsAt.IsEnabled = false;
-                txt_StartsAt.Text = "";
 
-                chk_endsAt.IsEnabled = false;
-                chk_endsAt.IsChecked = false;
 
-                txt_endsAt.IsEnabled = false;
-                txt_endsAt.Text = "";
-            }
-            RefrescarComando();
-        }
         private void Cb_Formats_DropDownClosed(object sender, EventArgs e)
         {
             try
@@ -500,14 +566,16 @@ namespace Media_Downloader
             if (!Directory.Exists(DownloadPath)) Directory.CreateDirectory(DownloadPath);
 
 
-
+            //TODO UPDATE
             cb_Formats.ItemsSource = listaVideo;
             cb_Formats.SelectedItem = listaVideo[0];
 
             chk_startsAt.IsEnabled = false;
-            txt_StartsAt.IsEnabled = false;
+            txt_startsAt.IsEnabled = false;
             chk_endsAt.IsEnabled = false;
             txt_endsAt.IsEnabled = false;
+            isVideo = true;
+
             RefrescarComando();
         }
         private void Txt_URL_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -515,12 +583,6 @@ namespace Media_Downloader
             txt_URL.Text = Clipboard.GetText();
             RefrescarComando();
         }
-        private void Chk_Embedsubs_Click(object sender, RoutedEventArgs e)
-        {
-            chk_Addsubsfile.IsChecked = chk_EmbedThumb.IsChecked;
-            RefrescarComando();
-        }
-
         #endregion
     }
 }
