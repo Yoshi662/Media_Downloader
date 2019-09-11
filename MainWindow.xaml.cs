@@ -3,18 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Xml.Serialization;
+using System.Windows.Controls;
 
 namespace Media_Downloader
 {
@@ -23,9 +15,12 @@ namespace Media_Downloader
     * TODO:
     * Presets
     * 
-    * Cambiar todos los NAMES del XAML a bindings. Arreglar sus dependencias con los Click"Nombre_metodo" y añadir todos los bindins posibiles.
-    * Luego hara falta refactorizar todo para usar las propiedades de este archivo
-    * Y DESPUES SOLO TENDRE QUE HACER LAS PRESETS. (Y la globalizacion)
+    * Hacer que la lista de Presets sea una propiedad para que el getter, siempre las cargue de un archivo, y el setter siempre las guarde en el archivo. (Y ambas recarguen el menu)
+    * Aunque siendo una lista. No se como voy a hacerlo. pero lo hare.
+    * 
+    * Tengo que crear todo el codigo para cargar la lista de presets desde un archivo XML
+    * Y luego el siguiente que carge el menu con las opciones de los presets 
+    * 
     * 
     * hacer un poco de cast en los setters de StartsAtInt y EndsAtInt
     * 
@@ -37,7 +32,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.4.2b";
+        private readonly String CurrentVersion = "0.5.0b";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -184,9 +179,6 @@ namespace Media_Downloader
         public bool Embed_subs { get => embed_subs; set { embed_subs = value; OnPropertyChanged("Embed_subs"); } }
         private bool embed_subs;
 
-        public string Extension { get => extension; set { extension = value; OnPropertyChanged("Extension"); } }
-        private string extension;
-
         public bool IsVideo { get => isVideo; set { isVideo = value; OnPropertyChanged("IsVideo"); Seleccion_click(); } }
         private bool isVideo;
 
@@ -199,11 +191,15 @@ namespace Media_Downloader
         private string YoutubedlPath;
         private string DownloadPath;
         private string MainPath;
+        private string PresetsFilePath;
 
         //Extensiones
         private List<String> listaVideo = new List<String> { ".mp4", ".avi", ".mkv", ".webm" };
         private List<String> listaAudio = new List<String> { ".mp3", ".flac", ".aac", ".m4a", ".wav" };
         private String extensionSeleccionada = "";
+
+        //Presets
+        public List<Preset> Presets = new List<Preset>();
 
         //KKode
         private int KonamiStatus = 0;
@@ -225,15 +221,17 @@ namespace Media_Downloader
         }
         #endregion
 
-        #region big chunk of Logic
+        #region big chungus of Logic
         public MainWindow()
         {
             YoutubedlPath = AppDomain.CurrentDomain.BaseDirectory + @"Youtube-dl\";
             DownloadPath = AppDomain.CurrentDomain.BaseDirectory + @"Descargas";
             MainPath = AppDomain.CurrentDomain.BaseDirectory;
+            PresetsFilePath = AppDomain.CurrentDomain.BaseDirectory + @"Presets.XML";
             InitializeComponent();
             this.DataContext = this;
             Start();
+
         }
 
         private void Btn_Descargar_Click(object sender, RoutedEventArgs e)
@@ -367,10 +365,7 @@ namespace Media_Downloader
 
         }
 
-        private void AddPreset(object sender, RoutedEventArgs e)
-        {
-            //TODO BIG CHUNK OF CODE
-        }
+
         private void FuKonami_Sequencer(object sender, KeyEventArgs e)
         {
             if (e.Key == KonamiKode[KonamiStatus])
@@ -423,11 +418,11 @@ namespace Media_Downloader
 
             p.StartInfo = new ProcessStartInfo
             {
-                FileName = YoutubedlPath + "Youtube - dl.exe",
+                FileName = YoutubedlPath + "Youtube-dl.exe",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                Arguments = ""
+                Arguments = "--help"
             };
 
 
@@ -482,6 +477,214 @@ namespace Media_Downloader
         {
             Process.Start("https://ytdl-org.github.io/youtube-dl/supportedsites.html");
         }
+        #endregion
+
+        #region Presets
+        //Mira, son las 6 de la mañana, voy a dejar esto como me gustaria ahora y luego ya lo hago. Quizas no es la mejor manera, pero sientente libre de borrar
+        //todo esto
+
+        //Y SI, VOY A USAR LOS NOMBRES DE LAS PRESETS COMO IDS Y ME DA IGUAL LO QUE PIENSES
+
+
+        /// <summary>
+        /// Carga una lista de presets desde un archivo XML
+        /// </summary>
+        /// <param name="fullPath">La ruta completa del archivo XML</param>
+        /// <returns>Una Lista con todos los Presets</returns>
+        private List<Preset> LoadPresetsFromFile(String fullPath)
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(List<Preset>));
+            TextReader textReader = File.OpenText(PresetsFilePath);
+            List<Preset> retorno = (List<Preset>)serializer.Deserialize(textReader);
+            textReader.Close();
+            return retorno;
+
+
+        }
+
+        /// <summary>
+        /// Carga el menu de la interfaz grafica.
+        /// </summary>
+        /// <param name="presets">La lista de presets a cargar</param>
+        private void LoadPresetMenu(List<Preset> presets)
+        {
+            //Dis gon be gud - Y si. He hecho unas carpetas y he hecho un cmd>tree para obtener la lista de abajo
+
+            //  PresetName
+            //  ├───Usar
+            //  ├───Usar como predeterminada
+            //  └───Borrar (Necesita confirmacion)
+            this.Menu_presets.Items.Clear();
+
+            MenuItem anyadir = new MenuItem();
+            anyadir.Header = "Añadir preset";
+            anyadir.Click += AddPreset;
+
+            Menu_presets.Items.Add(anyadir);
+
+            List<MenuItem> ListaMenus = new List<MenuItem>();
+            for (int i = 0; i < presets.Count; i++)
+            {
+                //Create main menu item
+                MenuItem PresetMenuItem = new MenuItem();
+                PresetMenuItem.Header = (String)presets[i].Name;
+
+                //Create Usar MenuItem
+                MenuItem UsarMenuItem = new MenuItem();
+                UsarMenuItem.Header = "Usar";
+                UsarMenuItem.Click += PresetMenuItem_Click;
+
+                //Create Usar como predeterminada MenuItem
+                MenuItem PrederminadoMenuItem = new MenuItem();
+                PrederminadoMenuItem.Header = "Usar como predeterminado";
+                PrederminadoMenuItem.Click += PrederminadoMenuItem_Click;
+
+                //Create Borrar MenuItem
+                MenuItem BorrarMenuItem = new MenuItem();
+                BorrarMenuItem.Header = "Borrar";
+                BorrarMenuItem.Click += BorrarMenuItem_Click;
+
+                //Añado los menus correspondientes
+                Menu_presets.Items.Add(PresetMenuItem);
+
+                PresetMenuItem.Items.Add(UsarMenuItem);
+                PresetMenuItem.Items.Add(PrederminadoMenuItem);
+                PresetMenuItem.Items.Add(BorrarMenuItem);
+
+            }
+            this.Menu_presets.UpdateLayout();
+        }
+
+        private void BorrarMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem menuItem = (MenuItem)sender;
+            MenuItem father = (MenuItem)menuItem.Parent;
+            string NombrePreset = (String)father.Header;
+            for (int i = 0; i < Presets.Count; i++)
+            {
+                if (Presets[i].Name.Equals(NombrePreset))
+                {
+                    Presets.RemoveAt(i);
+                    i--;
+                }
+            }
+            SavePresetsToFile(PresetsFilePath, Presets);
+            LoadPresetMenu(Presets);
+        }
+
+        private void PrederminadoMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem menuItem = (MenuItem)sender;
+            MenuItem father = (MenuItem)menuItem.Parent;
+            string NombrePreset = (String)father.Header;
+            for (int i = 0; i < Presets.Count; i++)
+            {
+                if (Presets[i].Name.Equals(NombrePreset))
+                {
+                    Preset p = Presets[i];
+                    Presets.RemoveAt(i);
+                    Presets.Insert(0, p);
+                }
+            }
+            SavePresetsToFile(PresetsFilePath, Presets);
+            LoadPresetMenu(Presets);
+        }
+
+        private void PresetMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem menuItem = (MenuItem)sender;
+            MenuItem father = (MenuItem)menuItem.Parent;
+            string NombrePreset = (String)father.Header;
+            foreach (Preset preset in Presets)
+            {
+                if (preset.Name.Equals(NombrePreset)) LoadPreset(preset);
+            }
+        }
+
+        /// <summary>
+        /// Guarda una lista de presets en un archivo XML
+        /// </summary>
+        /// <param name="fullPath">La ruta completa donde se va a guardar</param>
+        /// <param name="presets">La lista con las presets</param>
+        private void SavePresetsToFile(String fullPath, List<Preset> presets)
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(List<Preset>));
+            TextWriter textWriter = File.CreateText(PresetsFilePath);
+            serializer.Serialize(textWriter, presets);
+            textWriter.Close();
+
+        }
+
+        /// <summary>
+        /// Carga una preset en la interfaz grafica
+        /// </summary>
+        /// <param name="preset">Preset a cargar</param>
+        private void LoadPreset(Preset preset)
+        {
+            IsPlaylist = preset.IsPlaylist;
+            StartsAt = preset.StartsAt;
+            EndsAt = preset.EndsAt;
+            StartsAtInt = preset.StartsAtInt;
+            EndsAtInt = preset.EndsAtInt;
+            Quiet = preset.Quiet;
+            Download_thumbnails = preset.Download_thumbnails;
+            Download_subs = preset.Download_subs;
+            Embed_thumbnails = preset.Embed_thumb;
+            Embed_subs = preset.Embed_subs;
+            extensionSeleccionada = preset.Extension;
+            if (preset.Media_type == (int)media_types.video)
+            {
+                IsVideo = true; IsAudio = false;
+            }
+            else
+            {
+                IsVideo = false; IsAudio = true;
+            } //Seguro que hay una forma mas complicada _y mejor_ de hacer esto, pero esto tambien tira
+        }
+
+        private void AddPreset(object sender, RoutedEventArgs e)
+        {
+            string name = Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre del preset", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
+            bool Repetido = false;
+            foreach (Preset preset in Presets)
+            {
+                if (preset.Name.Equals(name)) Repetido = true;
+            }
+            if (Repetido)
+            {
+                MessageBox.Show("Ya existe un preset con ese nombre", "Nombre repetido", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            else
+            {
+                if (!String.IsNullOrWhiteSpace(name)) { Presets.Add(SavePreset(name)); SavePresetsToFile(PresetsFilePath, Presets); LoadPresetMenu(Presets); }
+            }
+        }
+
+        /// <summary>
+        /// Guarda las opciones actuales dentro de una preset
+        /// </summary>
+        /// <param name="nombre">El nombre de la preset</param>
+        /// <returns>Preset con las opciones actuales</returns>
+        private Preset SavePreset(String nombre)
+        {
+            Preset preset = new Preset(
+                nombre,
+                IsPlaylist,
+                StartsAt,
+                EndsAt,
+                StartsAtInt,
+                EndsAtInt,
+                Quiet,
+                Download_thumbnails,
+                Download_subs,
+                Embed_thumbnails,
+                Embed_subs,
+                extensionSeleccionada, //Puede que esto falle
+                IsVideo ? (int)media_types.video : (int)media_types.audio
+                );
+            return preset;
+        }
+
         #endregion
 
         #region GUI RESPONSIVENESS
@@ -555,6 +758,7 @@ namespace Media_Downloader
         private void GUI_RefrescarComando_KeyUp(object sender, KeyEventArgs e) => RefrescarComando();
         private void Start()
         {
+            //Si no existe la carpeta de Youtube.dl da un aviso y cierra el programa
             if (!Directory.Exists(YoutubedlPath))
             {
                 MessageBox.Show("El programa no puede encontrar la carpeta con todos los archivos necesarios para funcionar." +
@@ -563,19 +767,26 @@ namespace Media_Downloader
                 Environment.Exit(1);
             }
 
+
             if (!Directory.Exists(DownloadPath)) Directory.CreateDirectory(DownloadPath);
 
+            //Si no encuentra el archivo con presets, lo crea y añade uno por defecto
+            if (!File.Exists(PresetsFilePath))
+            {
+                FileStream fs = File.Create(PresetsFilePath);
+                fs.Close();
+                List<Preset> TempPreset = new List<Preset>();
+                TempPreset.Add(new Preset());
+                SavePresetsToFile(PresetsFilePath, TempPreset);
+            }
 
-            //TODO UPDATE
-            cb_Formats.ItemsSource = listaVideo;
-            cb_Formats.SelectedItem = listaVideo[0];
+            Presets = LoadPresetsFromFile(PresetsFilePath);
 
-            chk_startsAt.IsEnabled = false;
-            txt_startsAt.IsEnabled = false;
-            chk_endsAt.IsEnabled = false;
-            txt_endsAt.IsEnabled = false;
-            isVideo = true;
+            //TODO, hacer que una nueva preset cargue como determinada
+            LoadPreset(Presets[0]);
+            LoadPresetMenu(Presets);
 
+            DevMode = true;
             RefrescarComando();
         }
         private void Txt_URL_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -584,5 +795,13 @@ namespace Media_Downloader
             RefrescarComando();
         }
         #endregion
+
+        private void GUI_DEV_TEST(object sender, RoutedEventArgs e)
+        {
+            Start();
+            //Presets = LoadPresetsFromFile(PresetsFilePath);
+            //LoadPresetMenu(Presets);
+            //this.Menu_presets.Items.Clear();
+        }
     }
 }

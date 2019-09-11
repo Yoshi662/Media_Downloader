@@ -24,8 +24,10 @@
             </MenuItem>
             <MenuItem Name="Menu_presets" Header="Presets">
                 <MenuItem Header="Añadir Preset" Click="AddPreset"/>
+                <Separator/>
                 <MenuItem Header="Preset Example">
                     <MenuItem Header="Usar"/>
+                    <MenuItem Header="Usar como predeterminada"/>
                     <MenuItem Header="Borrar"/>
                 </MenuItem>
             </MenuItem>
@@ -42,6 +44,7 @@
                 <MenuItem Header="Activar Verbose"  IsChecked="{Binding Verbose}"/>
                 <MenuItem Header="Activar Log" IsChecked="{Binding Log}"/>
                 <MenuItem Header="Lista completa de comandos" Click="MenuItem_ListarComandos"/>
+                <MenuItem Header="Test" Click="GUI_DEV_TEST"/>
             </MenuItem>
         </Menu>
 
