@@ -9,35 +9,37 @@ namespace Media_Downloader
     [Serializable]
     public class Preset
     {
-        private string name;
-        private bool isPlaylist;
-        private bool startsAt;
-        private bool endsAt;
-        private int startsAtInt;
-        private int endsAtInt;
-        private bool quiet;
-        private bool download_thumbnails;
-        private bool download_subs;
-        private bool embed_thumb;
-        private bool embed_subs;
-        private string extension;
-        private int media_type;
+        private string _name;
+        private bool _isPlaylist;
+        private bool _startsAt;
+        private bool _endsAt;
+        private int _startsAtInt;
+        private int _endsAtInt;
+        private bool _quiet;
+        private bool _download_thumbnails;
+        private bool _download_subs;
+        private bool _embed_thumb;
+        private bool _embed_subs;
+        private string _extension;
+        private int _media_type;
+        private bool _devMode;
 
-        public string Name { get => name; set => name = value; }
-        public bool IsPlaylist { get => isPlaylist; set => isPlaylist = value; }
-        public bool StartsAt { get => startsAt; set => startsAt = value; }
-        public bool EndsAt { get => endsAt; set => endsAt = value; }
-        public int StartsAtInt { get => startsAtInt; set => startsAtInt = value; }
-        public int EndsAtInt { get => endsAtInt; set => endsAtInt = value; }
-        public bool Quiet { get => quiet; set => quiet = value; }
-        public bool Download_thumbnails { get => download_thumbnails; set => download_thumbnails = value; }
-        public bool Download_subs { get => download_subs; set => download_subs = value; }
-        public bool Embed_thumb { get => embed_thumb; set => embed_thumb = value; }
-        public bool Embed_subs { get => embed_subs; set => embed_subs = value; }
-        public string Extension { get => extension; set => extension = value; }
-        public int Media_type { get => media_type; set => media_type = value; }
+        public string Name { get => _name; set => _name = value; }
+        public bool IsPlaylist { get => _isPlaylist; set => _isPlaylist = value; }
+        public bool StartsAt { get => _startsAt; set => _startsAt = value; }
+        public bool EndsAt { get => _endsAt; set => _endsAt = value; }
+        public int StartsAtInt { get => _startsAtInt; set => _startsAtInt = value; }
+        public int EndsAtInt { get => _endsAtInt; set => _endsAtInt = value; }
+        public bool Quiet { get => _quiet; set => _quiet = value; }
+        public bool Download_thumbnails { get => _download_thumbnails; set => _download_thumbnails = value; }
+        public bool Download_subs { get => _download_subs; set => _download_subs = value; }
+        public bool Embed_thumb { get => _embed_thumb; set => _embed_thumb = value; }
+        public bool Embed_subs { get => _embed_subs; set => _embed_subs = value; }
+        public string Extension { get => _extension; set => _extension = value; }
+        public int Media_type { get => _media_type; set => _media_type = value; }
+        public bool DevMode { get => _devMode; set => _devMode = value; }
 
-        public Preset(string name ,bool isPlaylist, bool startsAt, bool endsAt, int startsAtInt, int endsAtInt, bool quiet, bool download_thumbnails, bool download_subs, bool embed_thumb, bool embed_subs, string extension, int media_type)
+        public Preset(string name ,bool isPlaylist, bool startsAt, bool endsAt, int startsAtInt, int endsAtInt, bool quiet, bool download_thumbnails, bool download_subs, bool embed_thumb, bool embed_subs, string extension, int media_type, bool devMode)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             IsPlaylist = isPlaylist;
@@ -52,6 +54,7 @@ namespace Media_Downloader
             Embed_subs = embed_subs;
             Extension = extension ?? throw new ArgumentNullException(nameof(extension));
             Media_type = media_type;
+            DevMode = devMode;
         }
         /// <summary>
         /// Creates a default Preset
@@ -71,6 +74,7 @@ namespace Media_Downloader
             Embed_subs = false;
             Extension = "mp4";
             Media_type = (int)media_types.video;
+            DevMode = false;
         }
     }
     public enum media_types : int

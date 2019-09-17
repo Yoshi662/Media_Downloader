@@ -39,12 +39,18 @@
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Name="DevPanel" Header="OPCIONES DE DESAROLLO" Visibility="Hidden"> <!--TODO Ocultar esto para version final-->
+            <MenuItem Name="DevPanel" Header="OPCIONES DE DESAROLLO" Visibility="Hidden"> 
                 
                 <MenuItem Header="Activar Verbose"  IsChecked="{Binding Verbose}"/>
                 <MenuItem Header="Activar Log" IsChecked="{Binding Log}"/>
                 <MenuItem Header="Lista completa de comandos" Click="MenuItem_ListarComandos"/>
-                <MenuItem Header="Test" Click="GUI_DEV_TEST"/>
+                <MenuItem Header="Presets">
+                    <MenuItem Header="Cargar Presets desde archivo" Click="GUI_DEV_LoadPresetsFromFile"/>
+                    <MenuItem Header="Guardar Presets a archivo" Click="GUI_DEV_SavePresetsToFile"/>
+                    <MenuItem Header="Recargar Menu de Presets" Click="GUI_DEV_ReloadPresetsMenu"/>
+                </MenuItem>
+                <MenuItem Header="Ocultar opciones de desarrollo" Click="GUI_DEV_HideDevMode"/>
+                <MenuItem Header="TESTO_BUTTON" Click="GUI_DEV_TEST"/>
             </MenuItem>
         </Menu>
 
