@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Xml.Serialization;
 using System.Windows.Controls;
+using System.Threading;
 
 namespace Media_Downloader
 {
@@ -32,7 +33,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.5.1b";
+        private readonly String CurrentVersion = "0.6.1indev";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -213,6 +214,8 @@ namespace Media_Downloader
                 LoadPresetMenu(value);
             }
         }
+        //Otros
+        private String formatoDescarga = @"\%(title)s.%(ext)s";
 
         //KKode
         private int KonamiStatus = 0;
@@ -239,7 +242,17 @@ namespace Media_Downloader
         {
             InitializeComponent();
             this.DataContext = this;
+            this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
             Start();
+        }
+
+        private void Dispatcher_UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show("Se ha producido un error no controlado, el progama debe cerrarse", "Error no controlado", MessageBoxButton.OK, MessageBoxImage.Error);
+            String LogFile = MainPath + "Log.txt";
+            File.AppendAllText(LogFile, e.Exception.Message);
+            File.AppendAllText(LogFile, e.Exception.StackTrace);
+            Environment.Exit(1);
         }
 
         private void Btn_Descargar_Click(object sender, RoutedEventArgs e)
@@ -249,12 +262,14 @@ namespace Media_Downloader
             //añadimos la carpeta de salida al programa
             Youtube_dl.StartInfo.Arguments = Argumentos;
 
+            GetDownloadNames(MainPath + "Filenames.tmp",txt_URL.Text);
 
             Btn_Descargar.IsEnabled = false;
             Youtube_dl.Start();
             Youtube_dl.WaitForExit();
+            FFMPEG conversor = new FFMPEG(YoutubedlPath + "ffmpeg.exe");
+            conversor.Convert(MainPath + "Filenames.tmp", extensionSeleccionada);
             Btn_Descargar.IsEnabled = true;
-
             if (Youtube_dl.ExitCode > 0 && DevMode != false) //Habemus fallo (Y al estar DevMode Activado. Pensamos que no podria ser normal)
             {
                 MessageBoxResult resultado = MessageBox.Show("Ha habido un fallo en la ejecucion del programa." +
@@ -299,14 +314,58 @@ namespace Media_Downloader
                     "\n\n" + errlog +
                     "\n" + log;
 
-                MessageBox.Show(SalidaLog);
                 File.WriteAllText(LogFile, SalidaLog);
             }
+            while(File.Exists(MainPath + "Filenames.tmp"))
+            {
+                Thread.Sleep(200);
+            }
+            MessageBox.Show("Descarga completada", "Descarga completada", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private async void GetDownloadNames(String file, String url)
+        {
+
+            String args = "";
+
+            if (IsPlaylist)
+            {
+                args += " --yes-playlist";
+
+                if (StartsAt) args += " --playlist-start " + StartsAtInt;
+                if (EndsAt) args += " --playlist-end " + EndsAtInt;
+            }
+
+
+            ThreadStart threadStart = new ThreadStart(() =>
+            {
+                Process pr = new Process();
+                pr.StartInfo = new ProcessStartInfo
+                {
+                    FileName = YoutubedlPath + "Youtube-dl.exe",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    Arguments = " --get-filename" + args + " -o \"" + DownloadPath + formatoDescarga + "\" --restrict-filenames \"" + url + "\""
+                };
+                Console.Write(pr.StartInfo.Arguments);
+                pr.Start();
+                StreamReader strOutStream = pr.StandardOutput;
+                String salida = "";
+                while (!strOutStream.EndOfStream)
+                {
+                    salida += strOutStream.ReadLine() + "\n";
+                }
+                salida.TrimEnd();
+                File.WriteAllText(file, salida);
+            });
+            Thread th = new Thread(threadStart);
+            th.Start();
         }
 
         private void Refescar_STARTINFO()
         {
-            if (DevMode)
+            if (Log)
             {
                 Youtube_dl.StartInfo.RedirectStandardOutput = true;
                 Youtube_dl.StartInfo.RedirectStandardError = true;
@@ -340,9 +399,10 @@ namespace Media_Downloader
                 TempCmd += " --no-playlist";
             }
 
+            //TODO Remove when it works
             //Formato
-            extensionSeleccionada = cb_Formats.Text.TrimStart('.');
-            if (IsAudio)
+           extensionSeleccionada = cb_Formats.Text.TrimStart('.');
+            /*if (IsAudio)
             {
 
                 TempCmd += " -x";
@@ -351,7 +411,9 @@ namespace Media_Downloader
             else
             {
                 TempCmd += " --recode-video " + extensionSeleccionada;
-            }
+            }*/
+
+
 
 
             //embed - thumbs - subs                                                                                     >dubs
@@ -364,12 +426,13 @@ namespace Media_Downloader
             if (Embed_thumbnails) TempCmd += " --embed-thumbnail";
 
             //extra
+            
 
             if (Quiet) TempCmd += " --quiet";
 
             if (Verbose) TempCmd += " --verbose";
 
-            Argumentos = TempCmd + " -o " + "\"" + DownloadPath + @"\%(title)s.%(ext)s" + "\" \"" + txt_URL.Text + "\"";
+            Argumentos = TempCmd + " -o " + "\"" + DownloadPath + formatoDescarga + "\" --restrict-filenames \"" + txt_URL.Text + "\"";
 
         }
 
@@ -847,7 +910,7 @@ namespace Media_Downloader
         {
             MessageBox.Show("J̶͎̞͔̙̘͍̱͒̾̾͗̄̇̆̓̚͡E̸̙̼͌̐͑͆͡J̶̴̘̦͔͕̼̲̱͂ͮ̐̉Ỏ̭̤̗̥̩̼̻̣̥͋ͧJ̱͌ͮͨ̏Ě̷̛͎̝̭̭̺̤̅̅̒ͨ̚͝J̠͉̱͇̣̍̀͊ͪ͆ͮ̚͢O̵̵̘̣͇ͣͮ͑̃̓ͪ͜", @"º̶̈́̓҉̱̮̥͖̝̯͈͖͙ª̝̥̫̘̪ͭͤ̈̈́́̅ͭ·̡̟̫̙͉̬̼͎̻͋ͪ̉́͜&̼̺̰̥̘͋̓̓ͥ̃̂͗̃͝%̛͍̲̝̬̒ͤ̀͟$̧͈̼͚̭̝͈̱̤ͨ̒̇͒͊ͤ̓͡^͔̘̤̳̼̬̅̉͋͆͝¨̩͚̺̐̾̀*̫̘ͤ̃̏̑̏̂́Çͬ͛̊͜͜͏̫̬̻͕̳̙̜;̨͖͇̫͈̤ͦ_̡͖̭̜̲͔͎̳̆͛̿ͯͮͬ̆̕+ͨ̏̄̑͆̍̅̀͏͙̪̦͚͈-ͤ̔̿ͥ҉̟͍̖̙̘̥̳̪́¡̴̙̳̻̩̣̼̠̳̫ͯͬͣ̌̊ͩͭ́'̸͕͚̗̓̒̔͝·̢̗̙̯̱͍͕̱̦̬̍̊̽͟%̖͎͉̯͔̦̹͙ͬ̀ͧ̏̌̓ͮ́$̸̬̼͚̜̰̭͖̥̊̒̏̇͛͠·͕͙̿͌͂̀͊ͬ͠^̩̪̈ͪ͘*͈̱̱̫̘̩͙̞̊ͬ͗̒ͨ͠ͅ¨̼̟͑̓ͥͦͧ̑̌͘͡͞;̴̡͓͖͈̥̮̼ͧͪ͛͛̄̑ͬ͜+̩͉̟̭ͬͭ͗̇̍̄͌ͭ?̸̷̠̖͎̦̭͆̂̅̑ͬ͗̃ͣ͠'͇̪͈͚̳̦͊ͮ͛ͤ͛̇ͭ͟¡̧̣̯̜̩̔̾ͤͩ", MessageBoxButton.YesNoCancel, MessageBoxImage.Error);
         }
-        
+
 
         private void GUI_DEV_LoadPresetsFromFile(object sender, RoutedEventArgs e) => Presets = LoadPresetsFromFile(PresetsFilePath);
 
@@ -857,5 +920,15 @@ namespace Media_Downloader
 
         private void GUI_DEV_HideDevMode(object sender, RoutedEventArgs e) => DevMode = false;
         #endregion
+
+        private void Activar_Log_Click(object sender, RoutedEventArgs e)
+        {
+            Log = !Log;
+        }
+        private void Activar_Verbose_Click(object sender, RoutedEventArgs e)
+        {
+            Verbose = !Verbose;
+        }
+
     }
 }
