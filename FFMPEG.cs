@@ -24,15 +24,8 @@ namespace Media_Downloader
             }
             String[] rutasOrigen = File.ReadAllText(path).Split('\n');
 
-
-            foreach (string s in rutasOrigen)
-            {
-                if (String.IsNullOrWhiteSpace(s))
-                {
-                    continue;
-                }
-
-                Thread th = new Thread(() =>
+            Parallel.ForEach(rutasOrigen, new ParallelOptions { MaxDegreeOfParallelism = 10 }, s => {
+                if (!String.IsNullOrWhiteSpace(s))
                 {
                     String input = s;
                     String output = s.Substring(0, s.Length - s.Split('.').Last().Count()) + extensionSeleccionada;
@@ -57,9 +50,8 @@ namespace Media_Downloader
                     pr.WaitForExit();
                     pr.Dispose();
                     File.Delete(input);
-                });
-                th.Start();
-            }
+                }
+            });
             File.Delete(path);
         }
     }

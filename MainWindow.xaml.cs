@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Xml.Serialization;
 using System.Windows.Controls;
 using System.Threading;
+using System.Windows.Threading;
 
 namespace Media_Downloader
 {
@@ -264,14 +265,21 @@ namespace Media_Downloader
 
             GetDownloadNames(MainPath + "Filenames.tmp",txt_URL.Text);
 
-            Btn_Descargar.IsEnabled = false;
+            Dispatcher.BeginInvoke((Action)delegate {
+                Btn_Descargar.IsEnabled = false;
+                StatusBar.Text = "Descargando archivos";
+            }, DispatcherPriority.Background);
+            
+
             Youtube_dl.Start();
             Youtube_dl.WaitForExit();
-            FFMPEG conversor = new FFMPEG(YoutubedlPath + "ffmpeg.exe");
-            conversor.Convert(MainPath + "Filenames.tmp", extensionSeleccionada);
-            Btn_Descargar.IsEnabled = true;
+
             if (Youtube_dl.ExitCode > 0 && DevMode != false) //Habemus fallo (Y al estar DevMode Activado. Pensamos que no podria ser normal)
             {
+                Dispatcher.BeginInvoke((Action)delegate
+                {
+                    StatusBar.Text = "Fallo en la descarga";
+                }, DispatcherPriority.Background);
                 MessageBoxResult resultado = MessageBox.Show("Ha habido un fallo en la ejecucion del programa." +
                 "\n¿Quiere volver a intentar la descarga y guardar el resultado para poder revisarlo mas tarde?",
                 "Error en la descarga.",
@@ -288,6 +296,9 @@ namespace Media_Downloader
 
             if (Log)
             {
+                Dispatcher.BeginInvoke((Action)delegate {
+                    StatusBar.Text = "Generando log";
+                }, DispatcherPriority.Background);
                 String log = "", errlog = "";
                 StreamReader strOutStream, strErrStream;
                 String LogFile = MainPath + "Log.txt";
@@ -316,11 +327,21 @@ namespace Media_Downloader
 
                 File.WriteAllText(LogFile, SalidaLog);
             }
-            while(File.Exists(MainPath + "Filenames.tmp"))
+            Dispatcher.BeginInvoke((Action)delegate {
+                StatusBar.Text = "Convirtiendo Archivos";
+            }, DispatcherPriority.Background);
+            FFMPEG conversor = new FFMPEG(YoutubedlPath + "ffmpeg.exe");
+            conversor.Convert(MainPath + "Filenames.tmp", extensionSeleccionada);
+ 
+            while (File.Exists(MainPath + "Filenames.tmp"))
             {
                 Thread.Sleep(200);
             }
             MessageBox.Show("Descarga completada", "Descarga completada", MessageBoxButton.OK, MessageBoxImage.Information);
+            Dispatcher.BeginInvoke((Action)delegate {
+                Btn_Descargar.IsEnabled = true;
+            StatusBar.Text = "";
+            }, DispatcherPriority.Background);
         }
 
         private async void GetDownloadNames(String file, String url)
