@@ -8,8 +8,8 @@
         Title="Media Downloader" 
         xml:lang="es-ES"
         KeyUp="FuKonami_Sequencer" 
-        MinHeight="310" MinWidth="768" 
-        Height="310" Width="768"
+        MinHeight="325" MinWidth="768" 
+        Height="325" Width="768"
         d:DesignHeight="300" d:DesignWidth="768"
         >
 
@@ -117,7 +117,6 @@
             <Button Name="Btn_Descargar" Content="Descargar" Click="Btn_Descargar_Click" MinHeight="25" MinWidth="80" Margin="5,5,5,5" />
         </StackPanel>
         <Expander Header="(Avanzado) - Ver Comando final" ExpandDirection="Up" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Margin="4,4,4,0"
-                  ToolTip="Pulsando el Boton Refrescar Comando en opciones, puedes ver (y editar) el comando que se enviara al programa"
                   Expanded="GUI_RefrescarComando_Click">
             <TextBox Name="txt_Comando" Margin="4" Height="20" Text="{Binding Argumentos}"/>
         </Expander>
