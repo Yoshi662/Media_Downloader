@@ -946,7 +946,7 @@ namespace Media_Downloader
             {
                 Youtube_dl.StartInfo = new ProcessStartInfo
                 {
-                    FileName = YoutubedlPath + "Youtub.0e-dl.exe",
+                    FileName = YoutubedlPath + "Youtube-dl.exe",
                     RedirectStandardOutput = false,
                     UseShellExecute = true,
                     Arguments = "--rm-cache-dir"
