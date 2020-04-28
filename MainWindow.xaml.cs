@@ -3,27 +3,30 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Threading;
 using System.Xml.Serialization;
+using System.Windows.Controls;
+using System.Threading;
+using System.Windows.Threading;
 
 namespace Media_Downloader
 {
     /* Video con subtitulos https://www.youtube.com/watch?v=YU4-LFAK7t0 (Introduction to the Overwatch WorkShop)
     * Video sin subtitulos https://www.youtube.com/watch?v=-8rTfTm6JN0 (BAKURETSU BAKURESTU)
     * TODO:
-    *   Big things:
-    *       Localizacion. (No tengo NPI como lo voy a hacer)
-    *       Pruebas unitarias? Vendrian muy bien pero es mucho curro.
-    *       Mover todo Youtube-dl a una clase/proceso (Pasandole una preset / argumentos) 
-    *       y que trabaje en su propio hilo. (Ya sabes, para eso que no se joda toda la Interfaz cuando estas haciendo algo)
-    *       Esto se puede usar para que el hilo principal de ejecucion de la GUI y
-    *       el de Youtube-dl trabajen independientemente (y poder dar avisos al usuario sobre el tema)
+    * Presets
     * 
-    * hacer un poco de cast en los setters de StartsAtInt y EndsAtInt (Aunque el binding se ocupe de ello)
+    * Hacer que la lista de Presets sea una propiedad para que el getter, siempre las cargue de un archivo, y el setter siempre las guarde en el archivo. (Y ambas recarguen el menu)
+    * Aunque siendo una lista. No se como voy a hacerlo. pero lo hare.
+    * 
+    * Tengo que crear todo el codigo para cargar la lista de presets desde un archivo XML
+    * Y luego el siguiente que carge el menu con las opciones de los presets 
+    * 
+    * 
+    * hacer un poco de cast en los setters de StartsAtInt y EndsAtInt
+    * 
+    * 
     */
 
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -31,7 +34,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.6.5b";
+        private readonly String CurrentVersion = "0.6.3indev";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -84,9 +87,9 @@ namespace Media_Downloader
 
         public bool IsPlaylist
         {
-            get => _isPlaylist; set
+            get => isPlaylist; set
             {
-                _isPlaylist = value; OnPropertyChanged("IsPlaylist");
+                isPlaylist = value; OnPropertyChanged("IsPlaylist");
                 if (value)
                 {
                     chk_startsAt.IsEnabled = true;
@@ -108,13 +111,13 @@ namespace Media_Downloader
                 }
             }
         }
-        private bool _isPlaylist;
+        private bool isPlaylist;
 
         public bool StartsAt
         {
-            get => _startsAt; set
+            get => startsAt; set
             {
-                _startsAt = value; OnPropertyChanged("StartsAt");
+                startsAt = value; OnPropertyChanged("StartsAt");
                 if (value)
                 {
                     txt_startsAt.IsEnabled = true;
@@ -128,13 +131,13 @@ namespace Media_Downloader
 
             }
         }
-        private bool _startsAt;
+        private bool startsAt;
 
         public bool EndsAt
         {
-            get => _endsAt; set
+            get => endsAt; set
             {
-                _endsAt = value; OnPropertyChanged("EndsAt");
+                endsAt = value; OnPropertyChanged("EndsAt");
                 if (value)
                 {
                     txt_endsAt.IsEnabled = true;
@@ -148,41 +151,41 @@ namespace Media_Downloader
 
             }
         }
-        private bool _endsAt;
+        private bool endsAt;
 
-        public int StartsAtInt { get => _startsAtInt; set { _startsAtInt = value; OnPropertyChanged("StartsAtInt"); } }
-        private int _startsAtInt;
+        public int StartsAtInt { get => startsAtInt; set { startsAtInt = value; OnPropertyChanged("StartsAtInt"); } }
+        private int startsAtInt;
 
-        public int EndsAtInt { get => _endsAtInt; set { _endsAtInt = value; OnPropertyChanged("EndsAtInt"); } }
-        private int _endsAtInt;
+        public int EndsAtInt { get => endsAtInt; set { endsAtInt = value; OnPropertyChanged("EndsAtInt"); } }
+        private int endsAtInt;
 
-        public bool Quiet { get => _quiet; set { _quiet = value; OnPropertyChanged("Quiet"); } }
-        private bool _quiet;
+        public bool Quiet { get => quiet; set { quiet = value; OnPropertyChanged("Quiet"); } }
+        private bool quiet;
 
-        public bool Download_thumbnails { get => _download_thumbnails; set { _download_thumbnails = value; OnPropertyChanged("Download_thumbnails"); } }
-        private bool _download_thumbnails;
+        public bool Download_thumbnails { get => download_thumbnails; set { download_thumbnails = value; OnPropertyChanged("Download_thumbnails"); } }
+        private bool download_thumbnails;
 
-        public bool Download_subs { get => _download_subs; set { _download_subs = value; OnPropertyChanged("Download_subs"); } }
-        private bool _download_subs;
+        public bool Download_subs { get => download_subs; set { download_subs = value; OnPropertyChanged("Download_subs"); } }
+        private bool download_subs;
 
         public bool Embed_thumbnails
         {
-            get => _embed_thumbnails; set
+            get => embed_thumbnails; set
             {
-                _embed_thumbnails = value; OnPropertyChanged("Embed_thumbnails");
+                embed_thumbnails = value; OnPropertyChanged("Embed_thumbnails");
                 Download_thumbnails = value;
             }
         }
-        private bool _embed_thumbnails;
+        private bool embed_thumbnails;
 
-        public bool Embed_subs { get => _embed_subs; set { _embed_subs = value; OnPropertyChanged("Embed_subs"); } }
-        private bool _embed_subs;
+        public bool Embed_subs { get => embed_subs; set { embed_subs = value; OnPropertyChanged("Embed_subs"); } }
+        private bool embed_subs;
 
-        public bool IsVideo { get => _isVideo; set { _isVideo = value; OnPropertyChanged("IsVideo"); Seleccion_click(); } }
-        private bool _isVideo;
+        public bool IsVideo { get => isVideo; set { isVideo = value; OnPropertyChanged("IsVideo"); Seleccion_click(); } }
+        private bool isVideo;
 
-        public bool IsAudio { get => _isAudio; set { _isAudio = value; OnPropertyChanged("IsAudio"); Seleccion_click(); } }
-        private bool _isAudio;
+        public bool IsAudio { get => isAudio; set { isAudio = value; OnPropertyChanged("IsAudio"); Seleccion_click(); } }
+        private bool isAudio;
 
 
 
@@ -260,14 +263,13 @@ namespace Media_Downloader
             //añadimos la carpeta de salida al programa
             Youtube_dl.StartInfo.Arguments = Argumentos;
 
-            GetDownloadNames(MainPath + "Filenames.tmp", txt_URL.Text);
+            GetDownloadNames(MainPath + "Filenames.tmp",txt_URL.Text);
 
-            Dispatcher.BeginInvoke((Action)delegate
-            {
+            Dispatcher.BeginInvoke((Action)delegate {
                 Btn_Descargar.IsEnabled = false;
                 StatusBar.Text = "Descargando archivos";
             }, DispatcherPriority.Background);
-
+            
 
             Youtube_dl.Start();
             Youtube_dl.WaitForExit();
@@ -294,8 +296,7 @@ namespace Media_Downloader
 
             if (Log)
             {
-                Dispatcher.BeginInvoke((Action)delegate
-                {
+                Dispatcher.BeginInvoke((Action)delegate {
                     StatusBar.Text = "Generando log";
                 }, DispatcherPriority.Background);
                 String log = "", errlog = "";
@@ -326,28 +327,20 @@ namespace Media_Downloader
 
                 File.WriteAllText(LogFile, SalidaLog);
             }
-            Dispatcher.BeginInvoke((Action)delegate
-            {
+            Dispatcher.BeginInvoke((Action)delegate {
                 StatusBar.Text = "Convirtiendo Archivos";
             }, DispatcherPriority.Background);
             FFMPEG conversor = new FFMPEG(YoutubedlPath + "ffmpeg.exe");
             conversor.Convert(MainPath + "Filenames.tmp", extensionSeleccionada);
-
+ 
             while (File.Exists(MainPath + "Filenames.tmp"))
             {
                 Thread.Sleep(200);
             }
-         
-            MessageBoxResult openfolder = MessageBox.Show("Descarga completada\n¿Quieres abrir la carpeta de descargas?", "Descarga completada", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
-            if (openfolder.Equals(MessageBoxResult.Yes))
-            {
-                Process.Start(DownloadPath);
-            }
-
-            Dispatcher.BeginInvoke((Action)delegate
-            {
+            MessageBox.Show("Descarga completada", "Descarga completada", MessageBoxButton.OK, MessageBoxImage.Information);
+            Dispatcher.BeginInvoke((Action)delegate {
                 Btn_Descargar.IsEnabled = true;
-                StatusBar.Text = "";
+            StatusBar.Text = "";
             }, DispatcherPriority.Background);
         }
 
@@ -362,9 +355,6 @@ namespace Media_Downloader
 
                 if (StartsAt) args += " --playlist-start " + StartsAtInt;
                 if (EndsAt) args += " --playlist-end " + EndsAtInt;
-            } else
-            {
-                args += " --no-playlist";
             }
 
 
@@ -396,10 +386,19 @@ namespace Media_Downloader
 
         private void Refescar_STARTINFO()
         {
-                Youtube_dl.StartInfo.RedirectStandardOutput = Log;
-                Youtube_dl.StartInfo.RedirectStandardError = Log;
-                Youtube_dl.StartInfo.UseShellExecute = !Log;
-                Youtube_dl.StartInfo.CreateNoWindow = Quiet;
+            if (Log)
+            {
+                Youtube_dl.StartInfo.RedirectStandardOutput = true;
+                Youtube_dl.StartInfo.RedirectStandardError = true;
+                Youtube_dl.StartInfo.UseShellExecute = false;
+                Youtube_dl.StartInfo.CreateNoWindow = true;
+            }
+            else
+            {
+                Youtube_dl.StartInfo.RedirectStandardOutput = false;
+                Youtube_dl.StartInfo.UseShellExecute = true;
+                Youtube_dl.StartInfo.CreateNoWindow = false;
+            }
         }
         private void RefrescarComando()
         {
@@ -423,13 +422,19 @@ namespace Media_Downloader
 
             //TODO Remove when it works
             //Formato
-            extensionSeleccionada = cb_Formats.Text.TrimStart('.');
-            if (IsAudio)
+           extensionSeleccionada = cb_Formats.Text.TrimStart('.');
+            /*if (IsAudio)
             {
 
                 TempCmd += " -x";
                 TempCmd += " --audio-format " + extensionSeleccionada;
             }
+            else
+            {
+                TempCmd += " --recode-video " + extensionSeleccionada;
+            }*/
+
+
 
 
             //embed - thumbs - subs                                                                                     >dubs
@@ -442,7 +447,9 @@ namespace Media_Downloader
             if (Embed_thumbnails) TempCmd += " --embed-thumbnail";
 
             //extra
+            
 
+            if (Quiet) TempCmd += " --quiet";
 
             if (Verbose) TempCmd += " --verbose";
 
@@ -463,7 +470,6 @@ namespace Media_Downloader
                 KonamiStatus = 0;
                 DevMode = true;
             }
-
         }
 
 
@@ -477,7 +483,6 @@ namespace Media_Downloader
                 Arguments = "-U"
             }; //dis shit is useful bro
 
-
             Youtube_dl.Start();
         }
         private void MenuItem_CheckVersion(object sender, RoutedEventArgs e)
@@ -486,10 +491,9 @@ namespace Media_Downloader
             String salida = $"Media_Downloader v{CurrentVersion}" + "\n\n";
 
             //Youtube-dl GetLine
-            salida += "Version Youtube-dl: " + GetLine(YoutubedlPath + "Youtube-dl.exe", "--version") + "\n\n";
+            salida += "Version Youtube-dl: " + GetLineFromProcess(YoutubedlPath + "Youtube-dl.exe", "--version") + "\n\n";
             //FFMPEG version
-            salida += GetLine(YoutubedlPath + "ffmpeg.exe", "-version") + "\n\n";
-          
+            salida += GetLineFromProcess(YoutubedlPath + "ffmpeg.exe", "-version") + "\n\n";
             MessageBox.Show(salida, "Versiones", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         private void MenuItem_ListarComandos(object sender, RoutedEventArgs e) //TODO
@@ -507,6 +511,8 @@ namespace Media_Downloader
                 CreateNoWindow = true,
                 Arguments = "--help"
             };
+
+
 
             p.Start();
             strOutStream = p.StandardOutput;
@@ -528,7 +534,7 @@ namespace Media_Downloader
         /// <param name="Arguments">Argumentos pasados a dicho proceso</param>
         /// <param name="Line">La linea en Base 0 que devuelve</param>
         /// <returns>La primera linea que devuelve el proceso</returns>
-        private String GetLine(String Path, String Arguments, int Line = 0)
+        private String GetLineFromProcess(String Path, String Arguments, int Line = 0)
         {
             String salida = "";
             Process p = new Process();
@@ -795,7 +801,7 @@ namespace Media_Downloader
         #region GUI RESPONSIVENESS
         private void Seleccion_click()
         { //Seguro que hay formas mejores de hacer esto. SEGURISIMO
-            if (IsVideo)
+            if (isVideo)
             {
                 cb_Formats.ItemsSource = listaVideo;
                 cb_Formats.SelectedItem = listaVideo[0];
@@ -890,11 +896,6 @@ namespace Media_Downloader
                 SavePresetsToFile(PresetsFilePath, TempPreset);
             }
 
-            if(File.Exists(MainPath + "Filenames.tmp"))
-            {
-                File.Delete(MainPath + "Filenames.tmp");
-            }
-
             Presets = LoadPresetsFromFile(PresetsFilePath);
 
             //En caso de que no haya ninguna preset cargada (Es decir, que el usuario haya decidido borrar todas las presets en el XML) Genera una por defecto
@@ -919,11 +920,13 @@ namespace Media_Downloader
         }
         #endregion
 
+
         #region El rincon oscuro del dev
         private void GUI_DEV_TEST(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("J̶͎̞͔̙̘͍̱͒̾̾͗̄̇̆̓̚͡E̸̙̼͌̐͑͆͡J̶̴̘̦͔͕̼̲̱͂ͮ̐̉Ỏ̭̤̗̥̩̼̻̣̥͋ͧJ̱͌ͮͨ̏Ě̷̛͎̝̭̭̺̤̅̅̒ͨ̚͝J̠͉̱͇̣̍̀͊ͪ͆ͮ̚͢O̵̵̘̣͇ͣͮ͑̃̓ͪ͜", @"º̶̈́̓҉̱̮̥͖̝̯͈͖͙ª̝̥̫̘̪ͭͤ̈̈́́̅ͭ·̡̟̫̙͉̬̼͎̻͋ͪ̉́͜&̼̺̰̥̘͋̓̓ͥ̃̂͗̃͝%̛͍̲̝̬̒ͤ̀͟$̧͈̼͚̭̝͈̱̤ͨ̒̇͒͊ͤ̓͡^͔̘̤̳̼̬̅̉͋͆͝¨̩͚̺̐̾̀*̫̘ͤ̃̏̑̏̂́Çͬ͛̊͜͜͏̫̬̻͕̳̙̜;̨͖͇̫͈̤ͦ_̡͖̭̜̲͔͎̳̆͛̿ͯͮͬ̆̕+ͨ̏̄̑͆̍̅̀͏͙̪̦͚͈-ͤ̔̿ͥ҉̟͍̖̙̘̥̳̪́¡̴̙̳̻̩̣̼̠̳̫ͯͬͣ̌̊ͩͭ́'̸͕͚̗̓̒̔͝·̢̗̙̯̱͍͕̱̦̬̍̊̽͟%̖͎͉̯͔̦̹͙ͬ̀ͧ̏̌̓ͮ́$̸̬̼͚̜̰̭͖̥̊̒̏̇͛͠·͕͙̿͌͂̀͊ͬ͠^̩̪̈ͪ͘*͈̱̱̫̘̩͙̞̊ͬ͗̒ͨ͠ͅ¨̼̟͑̓ͥͦͧ̑̌͘͡͞;̴̡͓͖͈̥̮̼ͧͪ͛͛̄̑ͬ͜+̩͉̟̭ͬͭ͗̇̍̄͌ͭ?̸̷̠̖͎̦̭͆̂̅̑ͬ͗̃ͣ͠'͇̪͈͚̳̦͊ͮ͛ͤ͛̇ͭ͟¡̧̣̯̜̩̔̾ͤͩ", MessageBoxButton.YesNoCancel, MessageBoxImage.Error);
         }
+
 
         private void GUI_DEV_LoadPresetsFromFile(object sender, RoutedEventArgs e) => Presets = LoadPresetsFromFile(PresetsFilePath);
 
@@ -932,23 +935,7 @@ namespace Media_Downloader
         private void GUI_DEV_ReloadPresetsMenu(object sender, RoutedEventArgs e) => LoadPresetMenu(Presets);
 
         private void GUI_DEV_HideDevMode(object sender, RoutedEventArgs e) => DevMode = false;
-
-        private void GUI_DEV_LimpiarCache(object sender, RoutedEventArgs e)
-        {
-            if (Youtube_dl.HasExited)
-            {
-                Youtube_dl.StartInfo = new ProcessStartInfo
-                {
-                    FileName = YoutubedlPath + "Youtub.0e-dl.exe",
-                    RedirectStandardOutput = false,
-                    UseShellExecute = true,
-                    Arguments = "--rm-cache-dir"
-                }; //dis shit is useful bro
-                Youtube_dl.Start();
-                Youtube_dl.WaitForExit();
-                MessageBox.Show("Cache Limpiada", "No mas errores 403!", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
+        
 
         private void Activar_Log_Click(object sender, RoutedEventArgs e)
         {
@@ -959,7 +946,5 @@ namespace Media_Downloader
             Verbose = !Verbose;
         }
         #endregion
-
-        
     }
 }

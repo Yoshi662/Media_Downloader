@@ -16,8 +16,12 @@
     <DockPanel Name="MainPanel">
         <!--Status bar-->
         <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock Name="StatusBar"/>
+
+            <StatusBarItem HorizontalAlignment="Left">
+                <TextBlock Name="StatusBar" Text="Convirtiendo"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <ProgressBar Width="500" Height="16" IsIndeterminate="True"/>
             </StatusBarItem>
         </StatusBar>
         <!--Main Menu-->
@@ -121,6 +125,6 @@
                   Expanded="GUI_RefrescarComando_Click">
             <TextBox Name="txt_Comando" Margin="4" Height="20" Text="{Binding Argumentos}"/>
         </Expander>
-       
+
     </DockPanel>
 </Window>
