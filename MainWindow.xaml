@@ -18,9 +18,9 @@
         <StatusBar DockPanel.Dock="Bottom">
 
             <StatusBarItem HorizontalAlignment="Left">
-                <TextBlock Name="StatusBar" Text="Convirtiendo"/>
+                <TextBlock Name="StatusBar" Text="Listo"/>
             </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
+            <StatusBarItem HorizontalAlignment="Right" Visibility="Hidden">
                 <ProgressBar Width="500" Height="16" IsIndeterminate="True"/>
             </StatusBarItem>
         </StatusBar>
