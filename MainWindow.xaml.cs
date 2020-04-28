@@ -31,7 +31,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.6.4indev";
+        private readonly String CurrentVersion = "0.6.5b";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -84,9 +84,9 @@ namespace Media_Downloader
 
         public bool IsPlaylist
         {
-            get => isPlaylist; set
+            get => _isPlaylist; set
             {
-                isPlaylist = value; OnPropertyChanged("IsPlaylist");
+                _isPlaylist = value; OnPropertyChanged("IsPlaylist");
                 if (value)
                 {
                     chk_startsAt.IsEnabled = true;
@@ -108,13 +108,13 @@ namespace Media_Downloader
                 }
             }
         }
-        private bool isPlaylist;
+        private bool _isPlaylist;
 
         public bool StartsAt
         {
-            get => startsAt; set
+            get => _startsAt; set
             {
-                startsAt = value; OnPropertyChanged("StartsAt");
+                _startsAt = value; OnPropertyChanged("StartsAt");
                 if (value)
                 {
                     txt_startsAt.IsEnabled = true;
@@ -128,13 +128,13 @@ namespace Media_Downloader
 
             }
         }
-        private bool startsAt;
+        private bool _startsAt;
 
         public bool EndsAt
         {
-            get => endsAt; set
+            get => _endsAt; set
             {
-                endsAt = value; OnPropertyChanged("EndsAt");
+                _endsAt = value; OnPropertyChanged("EndsAt");
                 if (value)
                 {
                     txt_endsAt.IsEnabled = true;
@@ -148,41 +148,41 @@ namespace Media_Downloader
 
             }
         }
-        private bool endsAt;
+        private bool _endsAt;
 
-        public int StartsAtInt { get => startsAtInt; set { startsAtInt = value; OnPropertyChanged("StartsAtInt"); } }
-        private int startsAtInt;
+        public int StartsAtInt { get => _startsAtInt; set { _startsAtInt = value; OnPropertyChanged("StartsAtInt"); } }
+        private int _startsAtInt;
 
-        public int EndsAtInt { get => endsAtInt; set { endsAtInt = value; OnPropertyChanged("EndsAtInt"); } }
-        private int endsAtInt;
+        public int EndsAtInt { get => _endsAtInt; set { _endsAtInt = value; OnPropertyChanged("EndsAtInt"); } }
+        private int _endsAtInt;
 
-        public bool Quiet { get => quiet; set { quiet = value; OnPropertyChanged("Quiet"); } }
-        private bool quiet;
+        public bool Quiet { get => _quiet; set { _quiet = value; OnPropertyChanged("Quiet"); } }
+        private bool _quiet;
 
-        public bool Download_thumbnails { get => download_thumbnails; set { download_thumbnails = value; OnPropertyChanged("Download_thumbnails"); } }
-        private bool download_thumbnails;
+        public bool Download_thumbnails { get => _download_thumbnails; set { _download_thumbnails = value; OnPropertyChanged("Download_thumbnails"); } }
+        private bool _download_thumbnails;
 
-        public bool Download_subs { get => download_subs; set { download_subs = value; OnPropertyChanged("Download_subs"); } }
-        private bool download_subs;
+        public bool Download_subs { get => _download_subs; set { _download_subs = value; OnPropertyChanged("Download_subs"); } }
+        private bool _download_subs;
 
         public bool Embed_thumbnails
         {
-            get => embed_thumbnails; set
+            get => _embed_thumbnails; set
             {
-                embed_thumbnails = value; OnPropertyChanged("Embed_thumbnails");
+                _embed_thumbnails = value; OnPropertyChanged("Embed_thumbnails");
                 Download_thumbnails = value;
             }
         }
-        private bool embed_thumbnails;
+        private bool _embed_thumbnails;
 
-        public bool Embed_subs { get => embed_subs; set { embed_subs = value; OnPropertyChanged("Embed_subs"); } }
-        private bool embed_subs;
+        public bool Embed_subs { get => _embed_subs; set { _embed_subs = value; OnPropertyChanged("Embed_subs"); } }
+        private bool _embed_subs;
 
-        public bool IsVideo { get => isVideo; set { isVideo = value; OnPropertyChanged("IsVideo"); Seleccion_click(); } }
-        private bool isVideo;
+        public bool IsVideo { get => _isVideo; set { _isVideo = value; OnPropertyChanged("IsVideo"); Seleccion_click(); } }
+        private bool _isVideo;
 
-        public bool IsAudio { get => isAudio; set { isAudio = value; OnPropertyChanged("IsAudio"); Seleccion_click(); } }
-        private bool isAudio;
+        public bool IsAudio { get => _isAudio; set { _isAudio = value; OnPropertyChanged("IsAudio"); Seleccion_click(); } }
+        private bool _isAudio;
 
 
 
@@ -396,19 +396,10 @@ namespace Media_Downloader
 
         private void Refescar_STARTINFO()
         {
-            if (Log)
-            {
-                Youtube_dl.StartInfo.RedirectStandardOutput = true;
-                Youtube_dl.StartInfo.RedirectStandardError = true;
-                Youtube_dl.StartInfo.UseShellExecute = false;
-                Youtube_dl.StartInfo.CreateNoWindow = true;
-            }
-            else
-            {
-                Youtube_dl.StartInfo.RedirectStandardOutput = false;
-                Youtube_dl.StartInfo.UseShellExecute = true;
-                Youtube_dl.StartInfo.CreateNoWindow = false;
-            }
+                Youtube_dl.StartInfo.RedirectStandardOutput = Log;
+                Youtube_dl.StartInfo.RedirectStandardError = Log;
+                Youtube_dl.StartInfo.UseShellExecute = !Log;
+                Youtube_dl.StartInfo.CreateNoWindow = Quiet;
         }
         private void RefrescarComando()
         {
@@ -433,18 +424,12 @@ namespace Media_Downloader
             //TODO Remove when it works
             //Formato
             extensionSeleccionada = cb_Formats.Text.TrimStart('.');
-            /*if (IsAudio)
+            if (IsAudio)
             {
 
                 TempCmd += " -x";
                 TempCmd += " --audio-format " + extensionSeleccionada;
             }
-            else
-            {
-                TempCmd += " --recode-video " + extensionSeleccionada;
-            }*/
-
-
 
 
             //embed - thumbs - subs                                                                                     >dubs
@@ -458,8 +443,6 @@ namespace Media_Downloader
 
             //extra
 
-
-            if (Quiet) TempCmd += " --quiet";
 
             if (Verbose) TempCmd += " --verbose";
 
@@ -812,7 +795,7 @@ namespace Media_Downloader
         #region GUI RESPONSIVENESS
         private void Seleccion_click()
         { //Seguro que hay formas mejores de hacer esto. SEGURISIMO
-            if (isVideo)
+            if (IsVideo)
             {
                 cb_Formats.ItemsSource = listaVideo;
                 cb_Formats.SelectedItem = listaVideo[0];
@@ -949,7 +932,24 @@ namespace Media_Downloader
         private void GUI_DEV_ReloadPresetsMenu(object sender, RoutedEventArgs e) => LoadPresetMenu(Presets);
 
         private void GUI_DEV_HideDevMode(object sender, RoutedEventArgs e) => DevMode = false;
-        
+
+        private void GUI_DEV_LimpiarCache(object sender, RoutedEventArgs e)
+        {
+            if (Youtube_dl.HasExited)
+            {
+                Youtube_dl.StartInfo = new ProcessStartInfo
+                {
+                    FileName = YoutubedlPath + "Youtub.0e-dl.exe",
+                    RedirectStandardOutput = false,
+                    UseShellExecute = true,
+                    Arguments = "--rm-cache-dir"
+                }; //dis shit is useful bro
+                Youtube_dl.Start();
+                Youtube_dl.WaitForExit();
+                MessageBox.Show("Cache Limpiada", "No mas errores 403!", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         private void Activar_Log_Click(object sender, RoutedEventArgs e)
         {
             Log = !Log;
@@ -959,5 +959,7 @@ namespace Media_Downloader
             Verbose = !Verbose;
         }
         #endregion
+
+        
     }
 }

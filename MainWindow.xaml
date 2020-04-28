@@ -50,6 +50,7 @@
 
                 <MenuItem Header="Activar Verbose"  IsChecked="{Binding Verbose}" Click="Activar_Verbose_Click"/>
                 <MenuItem Header="Activar Log" IsChecked="{Binding Log}" Click="Activar_Log_Click"/>
+                <MenuItem Header="Limpiar Cache: [Error 403]" Click="GUI_DEV_LimpiarCache"/>
                 <MenuItem Header="Lista completa de comandos" Click="MenuItem_ListarComandos"/>
                 <MenuItem Header="Presets">
                     <MenuItem Header="Cargar Presets desde archivo" Click="GUI_DEV_LoadPresetsFromFile"/>
@@ -98,7 +99,7 @@
             <!--Extras-->
             <GroupBox Header="Extras" Grid.Column="1">
                 <StackPanel Orientation="Vertical">
-                    <CheckBox IsChecked="{Binding Quiet}" Content="Silencioso" ToolTip="No muestra salida" Margin="4" />
+                    <CheckBox IsChecked="{Binding Quiet}" Content="Silencioso" ToolTip="Evita que aparezca la interfaz de comandos" Margin="4" />
                     <CheckBox IsChecked="{Binding Download_thumbnails}" Content="Descargar Miniaturas" ToolTip="Se usara la miniatura del video como miniatura del archivo" Margin="4" />
                     <CheckBox IsChecked="{Binding Download_subs}" Content="Descargar Subtitulos" Margin="4" ToolTip="Descargar un archivo con subtitulos" />
                 </StackPanel>
