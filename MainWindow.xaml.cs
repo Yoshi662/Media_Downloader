@@ -31,7 +31,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.6.5b";
+        private readonly String CurrentVersion = "0.6.6b";
 
         //Youtube-dl
         Process Youtube_dl = new Process();

@@ -30,15 +30,15 @@ namespace Media_Downloader
                     String input = s;
                     String output = s.Substring(0, s.Length - s.Split('.').Last().Count()) + extensionSeleccionada;
 
-                    if(input == output)
-                    {
-                        options.Break();
-                        return;
-                    }
-
                     if (!File.Exists(s))
                     {
                         input = s.Substring(0, s.Length - s.Split('.').Last().Count()) + "mkv";
+                    }
+
+                    if (input == output)
+                    {
+                        options.Break();
+                        return;
                     }
 
                     Process pr = new Process();

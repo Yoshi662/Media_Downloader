@@ -67,9 +67,9 @@
         </Menu>
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" VerticalAlignment="Center" >
-            <Label Content="URL:"/>
-            <TextBox Name="txt_URL" MinWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="Click Derecho para pegar" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" />
-            <ComboBox Name="cb_Formats" Margin="2" MinWidth="70"  DropDownClosed="Cb_Formats_DropDownClosed"/>
+            <Label Content="URL:" VerticalAlignment="Center"/>
+            <TextBox Name="txt_URL" MaxWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="Click Derecho para pegar" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" Width="496" />
+            <ComboBox Name="cb_Formats"  Margin="2" MinWidth="70"  DropDownClosed="Cb_Formats_DropDownClosed"/>
             <RadioButton GroupName="FormatOptions" Name="rb_Video" Content="Video"  Margin="10,0,0,0" IsChecked="{Binding IsVideo}"  VerticalAlignment="Center"/>
             <RadioButton GroupName="FormatOptions" Name="rb_Audio" Content="Audio"  Margin="10,0,0,0"  IsChecked="{Binding IsAudio}"   VerticalAlignment="Center"/>
 
