@@ -68,7 +68,7 @@
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" VerticalAlignment="Center" >
             <Label Content="URL:" VerticalAlignment="Center"/>
-            <TextBox Name="txt_URL" MaxWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="Click Derecho para pegar" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" Width="496" />
+            <TextBox MinWidth="500" Name="txt_URL" MaxWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="Click Derecho para pegar" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" />
             <ComboBox Name="cb_Formats"  Margin="2" MinWidth="70"  DropDownClosed="Cb_Formats_DropDownClosed"/>
             <RadioButton GroupName="FormatOptions" Name="rb_Video" Content="Video"  Margin="10,0,0,0" IsChecked="{Binding IsVideo}"  VerticalAlignment="Center"/>
             <RadioButton GroupName="FormatOptions" Name="rb_Audio" Content="Audio"  Margin="10,0,0,0"  IsChecked="{Binding IsAudio}"   VerticalAlignment="Center"/>
@@ -119,7 +119,8 @@
         </Grid>
 
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Margin="0,0,10,10">
-            <Button Name="Btn_Descargar" Content="Descargar" Click="Btn_Descargar_Click" MinHeight="25" MinWidth="80" Margin="5,5,5,5" />
+            <Button Name="Btn_AbrirCarpeta" Content="Abrir Carpeta" Click="Btn_AbrirCarpeta_Click" MinHeight="25" MinWidth="80" Margin="5,5,5,5" />
+            <Button Name="Btn_Descargar" Content="Descargar" Click="Btn_Descargar_Click" MinHeight="25" MinWidth="120" Margin="5,5,5,5" />
         </StackPanel>
         <Expander Header="(Avanzado) - Ver Comando final" ExpandDirection="Up" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Margin="4,4,4,0"
                   Expanded="GUI_RefrescarComando_Click">

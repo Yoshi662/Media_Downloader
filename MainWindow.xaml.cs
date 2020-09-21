@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,7 +32,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.6.6b";
+        private readonly String CurrentVersion = "0.6.7b";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -338,12 +339,6 @@ namespace Media_Downloader
                 Thread.Sleep(200);
             }
 
-            MessageBoxResult openfolder = MessageBox.Show("Descarga completada\n¿Quieres abrir la carpeta de descargas?", "Descarga completada", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
-            if (openfolder.Equals(MessageBoxResult.Yes))
-            {
-                Process.Start(DownloadPath);
-            }
-
             Dispatcher.BeginInvoke((Action)delegate
             {
                 Btn_Descargar.IsEnabled = true;
@@ -565,6 +560,11 @@ namespace Media_Downloader
         {
             Process.Start("https://ytdl-org.github.io/youtube-dl/supportedsites.html");
         }
+        private void Btn_AbrirCarpeta_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(DownloadPath);
+        }
+
         #endregion
 
         #region Presets
@@ -742,20 +742,43 @@ namespace Media_Downloader
             Embed_thumbnails = preset.Embed_thumb;
             Embed_subs = preset.Embed_subs;
             extensionSeleccionada = preset.Extension;
-            if (preset.Media_type == (int)media_types.video)
+            bool isVideo = preset.Media_type == (int)media_types.video;
+            if (isVideo)
             {
-                IsVideo = true; IsAudio = false;
+                IsVideo = isVideo; IsAudio = !isVideo;
             }
             else
             {
-                IsVideo = false; IsAudio = true;
+                IsVideo = !isVideo; IsAudio = isVideo;
             } //Seguro que hay una forma mas complicada _y mejor_ de hacer esto, pero esto tambien tira
+
+            DownloadPath = preset.DownloadPath;
+            //si no existe la carpeta de descargas la crea
+            if (!Directory.Exists(DownloadPath)) Directory.CreateDirectory(DownloadPath);
             DevMode = preset.DevMode;
         }
 
         private void AddPreset(object sender, RoutedEventArgs e)
         {
             string name = Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre del preset", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
+            bool isvalidpath = false;
+            string path = "";
+
+            while (!isvalidpath)
+            {
+                path = AppDomain.CurrentDomain.BaseDirectory + Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre de la carpeta de descargas", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
+                //esta es la peor mierda que voy a hacer en un buen rato
+                try
+                {
+                    Directory.CreateDirectory(path);
+                    isvalidpath = true;
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("No se puede crear la carpeta de descargas.\nO ya existe.", "Error Creacion Preset", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+            }
             bool Repetido = false;
             foreach (Preset preset in Presets)
             {
@@ -791,6 +814,7 @@ namespace Media_Downloader
                 Embed_thumbnails,
                 Embed_subs,
                 extensionSeleccionada, //Puede que esto falle
+                DownloadPath,
                 IsVideo ? (int)media_types.video : (int)media_types.audio,
                 DevMode
                 );
@@ -871,7 +895,6 @@ namespace Media_Downloader
         private void Start()
         {
             YoutubedlPath = AppDomain.CurrentDomain.BaseDirectory + @"Youtube-dl\";
-            DownloadPath = AppDomain.CurrentDomain.BaseDirectory + @"Descargas";
             MainPath = AppDomain.CurrentDomain.BaseDirectory;
             PresetsFilePath = AppDomain.CurrentDomain.BaseDirectory + @"Presets.XML";
 
@@ -884,8 +907,7 @@ namespace Media_Downloader
                 Environment.Exit(1);
             }
 
-            //si no existe la carpeta de descargas la crea
-            if (!Directory.Exists(DownloadPath)) Directory.CreateDirectory(DownloadPath);
+            
 
             //Si no encuentra el archivo con presets, lo crea y añade uno por defecto y lo vuelve a guardar
             if (!File.Exists(PresetsFilePath))
@@ -966,6 +988,7 @@ namespace Media_Downloader
             Verbose = !Verbose;
         }
         #endregion
+
 
     }
 }

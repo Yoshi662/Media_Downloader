@@ -22,6 +22,7 @@ namespace Media_Downloader
         private bool _embed_subs;
         private string _extension;
         private int _media_type;
+        private string _download_path;
         private bool _devMode;
 
         public string Name { get => _name; set => _name = value; }
@@ -37,9 +38,10 @@ namespace Media_Downloader
         public bool Embed_subs { get => _embed_subs; set => _embed_subs = value; }
         public string Extension { get => _extension; set => _extension = value; }
         public int Media_type { get => _media_type; set => _media_type = value; }
+        public string DownloadPath { get => _download_path; set => _download_path = value; }
         public bool DevMode { get => _devMode; set => _devMode = value; }
 
-        public Preset(string name ,bool isPlaylist, bool startsAt, bool endsAt, int startsAtInt, int endsAtInt, bool quiet, bool download_thumbnails, bool download_subs, bool embed_thumb, bool embed_subs, string extension, int media_type, bool devMode)
+        public Preset(string name ,bool isPlaylist, bool startsAt, bool endsAt, int startsAtInt, int endsAtInt, bool quiet, bool download_thumbnails, bool download_subs, bool embed_thumb, bool embed_subs, string extension,string download_path, int media_type, bool devMode)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             IsPlaylist = isPlaylist;
@@ -54,6 +56,7 @@ namespace Media_Downloader
             Embed_subs = embed_subs;
             Extension = extension ?? throw new ArgumentNullException(nameof(extension));
             Media_type = media_type;
+            DownloadPath = download_path;
             DevMode = devMode;
         }
         /// <summary>
@@ -70,9 +73,10 @@ namespace Media_Downloader
             Quiet = false;
             Download_thumbnails = false;
             Download_subs = false;
-            Embed_thumb = false;
+chrome://vivaldi-webui/startpage?section=Speed-dials&activeSpeedDialIndex=0&background-color=#412d38            Embed_thumb = false;
             Embed_subs = false;
             Extension = "mp4";
+            DownloadPath = AppDomain.CurrentDomain.BaseDirectory + @"Descargas";
             Media_type = (int)media_types.video;
             DevMode = false;
         }
