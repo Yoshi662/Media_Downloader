@@ -32,7 +32,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.6.7b";
+        private readonly String CurrentVersion = "0.6.8b";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -188,10 +188,10 @@ namespace Media_Downloader
 
 
         //Rutas
-        private string YoutubedlPath;
-        private string DownloadPath;
-        private string MainPath;
-        private string PresetsFilePath;
+        private string YoutubedlPath = "";
+        private string DownloadPath = "";
+        private string MainPath = "";
+        private string PresetsFilePath = "";
 
         //Extensiones
         private List<String> listaVideo = new List<String> { ".mp4", ".avi", ".mkv", ".webm" };
@@ -749,7 +749,7 @@ namespace Media_Downloader
             }
             else
             {
-                IsVideo = !isVideo; IsAudio = isVideo;
+                IsVideo = isVideo; IsAudio = !isVideo;
             } //Seguro que hay una forma mas complicada _y mejor_ de hacer esto, pero esto tambien tira
 
             DownloadPath = preset.DownloadPath;
@@ -760,38 +760,64 @@ namespace Media_Downloader
 
         private void AddPreset(object sender, RoutedEventArgs e)
         {
-            string name = Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre del preset", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
-            bool isvalidpath = false;
-            string path = "";
+            //Flags
+            bool repetido = false,
+                 canceled = false;
+            //ruta y nombre de la  preset
+            string path = "",
+                   name = "";
 
-            while (!isvalidpath)
+            //preguntamos por el nombre ¡Y! control de presets repetidas
+            name = Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre del preset", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
+            canceled = string.IsNullOrWhiteSpace(name);
+            if (!canceled)
             {
-                path = AppDomain.CurrentDomain.BaseDirectory + Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre de la carpeta de descargas", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
-                //esta es la peor mierda que voy a hacer en un buen rato
-                try
+                do
                 {
-                    Directory.CreateDirectory(path);
-                    isvalidpath = true;
-                }
-                catch (Exception)
-                {
-                    MessageBox.Show("No se puede crear la carpeta de descargas.\nO ya existe.", "Error Creacion Preset", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                    repetido = false;
+                    foreach (Preset preset in Presets)
+                    {
+                        if (preset.Name.Equals(name)) repetido = true;
+                    }
+                    if (repetido)
+                    {
+                        MessageBox.Show("Ya existe un preset con ese nombre\nEscoja otro nombre", "Nombre repetido", MessageBoxButton.OK, MessageBoxImage.Error);
+                        name = Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre del preset", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
+                    }
+                } while (repetido);
+            }
 
-            }
-            bool Repetido = false;
-            foreach (Preset preset in Presets)
+
+
+            //Control de rutas
+            if (!canceled)
             {
-                if (preset.Name.Equals(name)) Repetido = true;
+                using (System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog
+                {
+                    SelectedPath = MainPath,
+                    ShowNewFolderButton = true,
+                    Description = "Selecciona una carpeta de descargas\nPor defecto [Descargas]",
+                })
+                {
+                    System.Windows.Forms.DialogResult result = folderBrowserDialog.ShowDialog();
+                    if (result == System.Windows.Forms.DialogResult.OK)
+                    {
+                        path = folderBrowserDialog.SelectedPath;
+                    }
+                    else
+                    {
+                        path = MainPath + "Descargas";
+                    }
+                    DownloadPath = path;
+                }
             }
-            if (Repetido)
+
+            //Si esta todo bien guardamos la preset
+            if (!canceled && !repetido)
             {
-                MessageBox.Show("Ya existe un preset con ese nombre", "Nombre repetido", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Presets.Add(SavePreset(name)); SavePresetsToFile(PresetsFilePath, Presets); LoadPresetMenu(Presets);
             }
-            else
-            {
-                if (!String.IsNullOrWhiteSpace(name)) { Presets.Add(SavePreset(name)); SavePresetsToFile(PresetsFilePath, Presets); LoadPresetMenu(Presets); }
-            }
+            //he preguntado tres veces por la misma condicion? Si. Se te ocurre una forma mejor? haz un pull request
         }
 
         /// <summary>
@@ -907,7 +933,7 @@ namespace Media_Downloader
                 Environment.Exit(1);
             }
 
-            
+
 
             //Si no encuentra el archivo con presets, lo crea y añade uno por defecto y lo vuelve a guardar
             if (!File.Exists(PresetsFilePath))
