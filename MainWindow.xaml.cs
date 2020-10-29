@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Security.Policy;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -23,8 +24,9 @@ namespace Media_Downloader
     *       y que trabaje en su propio hilo. (Ya sabes, para eso que no se joda toda la Interfaz cuando estas haciendo algo)
     *       Esto se puede usar para que el hilo principal de ejecucion de la GUI y
     *       el de Youtube-dl trabajen independientemente (y poder dar avisos al usuario sobre el tema)
-    * 
-    * hacer un poco de cast en los setters de StartsAtInt y EndsAtInt (Aunque el binding se ocupe de ello)
+    *       
+    *   Smol things:
+    *       hacer un poco de cast en los setters de StartsAtInt y EndsAtInt (Aunque el binding se ocupe de ello)
     */
 
     public partial class MainWindow : Window, INotifyPropertyChanged
@@ -32,7 +34,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.6.8b";
+        private readonly String CurrentVersion = "0.7.0a";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -76,9 +78,8 @@ namespace Media_Downloader
             set
             {
                 _log = value; OnPropertyChanged("Log");
-                if (Log) MessageBox.Show("Ahora al descargar videos, no aparecera la ventana.\nPara ver dicha informacion, " +
-                      "mire el fichero de log ubicado en\n" + YoutubedlPath + "\\log.txt"
-                      + "\n\nAlso tengo que hacer esto mas bonico");
+                if (Log) MessageBox.Show(Properties.Strings.LogEnabledWarning + YoutubedlPath + "\\log.txt"
+                      + Properties.Strings.Bonico);
             }
         }
         private bool _log = false;
@@ -194,10 +195,19 @@ namespace Media_Downloader
         private string PresetsFilePath = "";
 
         //Extensiones
-        private List<String> listaVideo = new List<String> { ".mp4", ".avi", ".mkv", ".webm" };
-        private List<String> listaAudio = new List<String> { ".mp3", ".flac", ".aac", ".m4a", ".wav" };
-        private String extensionSeleccionada = "";
-
+        private String _ExtensionSeleccionada = "";
+        public string ExtensionSeleccionada
+        {
+            get
+            {
+                return _ExtensionSeleccionada;
+            }
+            set
+            {
+                _ExtensionSeleccionada = value;
+                OnPropertyChanged("ExtensionSeleccionada");
+            }
+        }
         //Presets
         private List<Preset> _presets = new List<Preset>();
         public List<Preset> Presets
@@ -213,6 +223,8 @@ namespace Media_Downloader
                 LoadPresetMenu(value);
             }
         }
+
+
         //Otros
         private String formatoDescarga = @"\%(title)s.%(ext)s";
 
@@ -239,15 +251,25 @@ namespace Media_Downloader
         #region big chungus of Logic
         public MainWindow()
         {
+            System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo(Properties.Settings.Default.Idioma);
+            Thread.CurrentThread.CurrentUICulture = culture;
+            Thread.CurrentThread.CurrentCulture = culture;
+
             InitializeComponent();
             this.DataContext = this;
             this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
+            this.Closing += MainWindow_Closing;
             Start();
+        }
+
+        private void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            Properties.Settings.Default.Save();
         }
 
         private void Dispatcher_UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            MessageBox.Show("Se ha producido un error no controlado, el progama debe cerrarse", "Error no controlado", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(Properties.Strings.ExceptionMsg, Properties.Strings.ExceptionTitle, MessageBoxButton.OK, MessageBoxImage.Error);
             String LogFile = MainPath + "Log.txt";
             File.AppendAllText(LogFile, e.Exception.Message);
             File.AppendAllText(LogFile, e.Exception.StackTrace);
@@ -266,7 +288,7 @@ namespace Media_Downloader
             Dispatcher.BeginInvoke((Action)delegate
             {
                 Btn_Descargar.IsEnabled = false;
-                StatusBar.Text = "Descargando archivos";
+                StatusBar.Text = Properties.Strings.Descargando_archivos;
             }, DispatcherPriority.Background);
 
 
@@ -277,11 +299,10 @@ namespace Media_Downloader
             {
                 Dispatcher.BeginInvoke((Action)delegate
                 {
-                    StatusBar.Text = "Fallo en la descarga";
+                    StatusBar.Text = Properties.Strings.Fallo_en_la_descarga;
                 }, DispatcherPriority.Background);
-                MessageBoxResult resultado = MessageBox.Show("Ha habido un fallo en la ejecucion del programa." +
-                "\n¿Quiere volver a intentar la descarga y guardar el resultado para poder revisarlo mas tarde?",
-                "Error en la descarga.",
+                MessageBoxResult resultado = MessageBox.Show(Properties.Strings.DownloadErrorMsg,
+                Properties.Strings.DownloadErrorTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Error);
 
@@ -297,7 +318,7 @@ namespace Media_Downloader
             {
                 Dispatcher.BeginInvoke((Action)delegate
                 {
-                    StatusBar.Text = "Generando log";
+                    StatusBar.Text = Properties.Strings.Generando_log;
                 }, DispatcherPriority.Background);
                 String log = "", errlog = "";
                 StreamReader strOutStream, strErrStream;
@@ -329,10 +350,10 @@ namespace Media_Downloader
             }
             Dispatcher.BeginInvoke((Action)delegate
             {
-                StatusBar.Text = "Convirtiendo Archivos";
+                StatusBar.Text = Properties.Strings.Convirtiendo_Archivos;
             }, DispatcherPriority.Background);
             FFMPEG conversor = new FFMPEG(YoutubedlPath + "ffmpeg.exe");
-            conversor.Convert(MainPath + "Filenames.tmp", extensionSeleccionada);
+            conversor.Convert(MainPath + "Filenames.tmp", ExtensionSeleccionada);
 
             while (File.Exists(MainPath + "Filenames.tmp"))
             {
@@ -428,12 +449,15 @@ namespace Media_Downloader
 
             //TODO Remove when it works
             //Formato
-            extensionSeleccionada = cb_Formats.Text.TrimStart('.');
+
+            //TODO hacer que esta asignacion se haga en otro sitio
+            //ExtensionSeleccionada = cb_Formats.Text.TrimStart('.');
+
             if (IsAudio)
             {
 
                 TempCmd += " -x";
-                TempCmd += " --audio-format " + extensionSeleccionada;
+                TempCmd += " --audio-format " + ExtensionSeleccionada;
             }
 
 
@@ -519,7 +543,7 @@ namespace Media_Downloader
             strOutStream.Dispose();
             p.Dispose();
 
-            MessageBox.Show(salida, "Lista Completa de opciones");
+            MessageBox.Show(salida, Properties.Strings.Lista_Completa_de_opciones);
         }
 
         //Este metodo me parece tan especifico que necesita su propia documentacion
@@ -563,6 +587,19 @@ namespace Media_Downloader
         private void Btn_AbrirCarpeta_Click(object sender, RoutedEventArgs e)
         {
             Process.Start(DownloadPath);
+        }
+
+        private void cb_Formats_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            /*ComboBoxItem typeItem = IsVideo ? (ComboBoxItem)cb_Formats_Video.SelectedItem : (ComboBoxItem)cb_Formats_Audio.SelectedItem;
+            ExtensionSeleccionada = typeItem.Content.ToString();*/
+            if ((sender as ComboBox).SelectedItem != null)
+            {
+                String exttemp = ((sender as ComboBox).SelectedItem as ComboBoxItem).Content.ToString();
+                ExtensionSeleccionada = exttemp;
+                txt_URL.Text = exttemp;
+            }
+
         }
 
         #endregion
@@ -635,7 +672,7 @@ namespace Media_Downloader
             this.Menu_presets.Items.Clear();
 
             MenuItem anyadir = new MenuItem();
-            anyadir.Header = "Añadir preset";
+            anyadir.Header = Properties.Strings.Añadir_Preset;
             anyadir.Click += AddPreset;
 
             Menu_presets.Items.Add(anyadir);
@@ -649,17 +686,17 @@ namespace Media_Downloader
 
                 //Create Usar MenuItem
                 MenuItem UsarMenuItem = new MenuItem();
-                UsarMenuItem.Header = "Usar";
+                UsarMenuItem.Header = Properties.Strings.Usar;
                 UsarMenuItem.Click += PresetMenuItem_Click;
 
                 //Create Usar como predeterminada MenuItem
                 MenuItem PrederminadoMenuItem = new MenuItem();
-                PrederminadoMenuItem.Header = "Usar como predeterminado";
+                PrederminadoMenuItem.Header = Properties.Strings.Usar_como_predeterminada;
                 PrederminadoMenuItem.Click += PrederminadoMenuItem_Click;
 
                 //Create Borrar MenuItem
                 MenuItem BorrarMenuItem = new MenuItem();
-                BorrarMenuItem.Header = "Borrar";
+                BorrarMenuItem.Header = Properties.Strings.Borrar;
                 BorrarMenuItem.Click += BorrarMenuItem_Click;
 
                 //Añado los menus correspondientes
@@ -680,7 +717,7 @@ namespace Media_Downloader
             string NombrePreset = (String)father.Header;
 
             //confirmacion
-            MessageBoxResult result = MessageBox.Show("Desea borrar la preset: " + NombrePreset, "Borrar Preset", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            MessageBoxResult result = MessageBox.Show(Properties.Strings.Desea_borrar_la_preset_ + NombrePreset, Properties.Strings.Borrar_Preset, MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (result.Equals(MessageBoxResult.Yes))
             {
                 for (int i = 0; i < Presets.Count; i++)
@@ -729,7 +766,7 @@ namespace Media_Downloader
         /// Carga una preset en la interfaz grafica
         /// </summary>
         /// <param name="preset">Preset a cargar</param>
-        private void LoadPreset(Preset preset)
+        public void LoadPreset(Preset preset)
         {
             IsPlaylist = preset.IsPlaylist;
             StartsAt = preset.StartsAt;
@@ -741,15 +778,19 @@ namespace Media_Downloader
             Download_subs = preset.Download_subs;
             Embed_thumbnails = preset.Embed_thumb;
             Embed_subs = preset.Embed_subs;
-            extensionSeleccionada = preset.Extension;
+            ExtensionSeleccionada = preset.Extension;
             bool isVideo = preset.Media_type == (int)media_types.video;
             if (isVideo)
             {
                 IsVideo = isVideo; IsAudio = !isVideo;
+                cb_Formats_Video.Visibility = isVideo ? Visibility.Visible : Visibility.Collapsed;
+                cb_Formats_Video.SelectedItem = ExtensionSeleccionada;
             }
             else
             {
                 IsVideo = isVideo; IsAudio = !isVideo;
+                cb_Formats_Audio.Visibility = !isVideo ? Visibility.Visible : Visibility.Collapsed;
+                cb_Formats_Audio.SelectedItem = ExtensionSeleccionada;
             } //Seguro que hay una forma mas complicada _y mejor_ de hacer esto, pero esto tambien tira
 
             DownloadPath = preset.DownloadPath;
@@ -768,7 +809,7 @@ namespace Media_Downloader
                    name = "";
 
             //preguntamos por el nombre ¡Y! control de presets repetidas
-            name = Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre del preset", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
+            name = Microsoft.VisualBasic.Interaction.InputBox(Properties.Strings.Introduce_el_nombre_del_preset, Properties.Strings.MeBeingLazy);
             canceled = string.IsNullOrWhiteSpace(name);
             if (!canceled)
             {
@@ -781,8 +822,9 @@ namespace Media_Downloader
                     }
                     if (repetido)
                     {
-                        MessageBox.Show("Ya existe un preset con ese nombre\nEscoja otro nombre", "Nombre repetido", MessageBoxButton.OK, MessageBoxImage.Error);
-                        name = Microsoft.VisualBasic.Interaction.InputBox("Introduce el nombre del preset", "No he podido hacerlo mejor, y soy demasiado vago y quiero algo funcional");
+                        MessageBox.Show(Properties.Strings.PresetExists, Properties.Strings.Nombre_Repetido, MessageBoxButton.OK, MessageBoxImage.Error);
+                        name = Microsoft.VisualBasic.Interaction.InputBox(Properties.Strings.Introduce_el_nombre_del_preset, Properties.Strings.MeBeingLazy);
+                        canceled = string.IsNullOrWhiteSpace(name);
                     }
                 } while (repetido);
             }
@@ -796,17 +838,18 @@ namespace Media_Downloader
                 {
                     SelectedPath = MainPath,
                     ShowNewFolderButton = true,
-                    Description = "Selecciona una carpeta de descargas\nPor defecto [Descargas]",
+                    Description = Properties.Strings.SelectDownloadFolder,
                 })
                 {
                     System.Windows.Forms.DialogResult result = folderBrowserDialog.ShowDialog();
+                    folderBrowserDialog.SelectedPath = MainPath + Properties.Strings.Descargas;
                     if (result == System.Windows.Forms.DialogResult.OK)
                     {
                         path = folderBrowserDialog.SelectedPath;
                     }
                     else
                     {
-                        path = MainPath + "Descargas";
+                        canceled = true;
                     }
                     DownloadPath = path;
                 }
@@ -825,7 +868,7 @@ namespace Media_Downloader
         /// </summary>
         /// <param name="nombre">El nombre de la preset</param>
         /// <returns>Preset con las opciones actuales</returns>
-        private Preset SavePreset(String nombre)
+        public Preset SavePreset(String nombre)
         {
             Preset preset = new Preset(
                 nombre,
@@ -839,7 +882,7 @@ namespace Media_Downloader
                 Download_subs,
                 Embed_thumbnails,
                 Embed_subs,
-                extensionSeleccionada, //Puede que esto falle
+                ExtensionSeleccionada, //Puede que esto falle
                 DownloadPath,
                 IsVideo ? (int)media_types.video : (int)media_types.audio,
                 DevMode
@@ -852,16 +895,26 @@ namespace Media_Downloader
         #region GUI RESPONSIVENESS
         private void Seleccion_click()
         { //Seguro que hay formas mejores de hacer esto. SEGURISIMO
-            if (IsVideo)
+           if (IsVideo)
             {
-                cb_Formats.ItemsSource = listaVideo;
-                cb_Formats.SelectedItem = listaVideo[0];
+               if(cb_Formats_Video.SelectedIndex == -1)
+                {
+                    cb_Formats_Video.SelectedIndex = 0;
+                }
+                cb_Formats_Video.Visibility = Visibility.Visible;
+                cb_Formats_Audio.Visibility = Visibility.Collapsed;
+                ExtensionSeleccionada = cb_Formats_Video.Text;
                 chk_Embedsubs.IsEnabled = true;
             }
             else
             {
-                cb_Formats.ItemsSource = listaAudio;
-                cb_Formats.SelectedItem = listaAudio[0];
+                if (cb_Formats_Audio.SelectedIndex == -1)
+                {
+                    cb_Formats_Audio.SelectedIndex = 0;
+                }
+                cb_Formats_Audio.Visibility = Visibility.Visible;
+                cb_Formats_Video.Visibility = Visibility.Collapsed;
+                ExtensionSeleccionada = cb_Formats_Audio.Text;
                 chk_Embedsubs.IsEnabled = false;
                 chk_Embedsubs.IsChecked = false;
             }
@@ -876,7 +929,7 @@ namespace Media_Downloader
             {
                 if (rb_Video.IsChecked == true)
                 {
-                    if (cb_Formats.SelectedItem.Equals(".avi"))
+                    if (ExtensionSeleccionada.Equals(".avi"))
                     {
                         chk_Embedsubs.IsChecked = false;
                         chk_Embedsubs.IsEnabled = false;
@@ -886,7 +939,7 @@ namespace Media_Downloader
                         chk_Embedsubs.IsEnabled = true;
                     }
 
-                    if (cb_Formats.SelectedItem.Equals(".mp4"))
+                    if (ExtensionSeleccionada.Equals(".mp4"))
                     {
                         chk_EmbedThumb.IsEnabled = true;
                     }
@@ -898,7 +951,7 @@ namespace Media_Downloader
                 }
                 else //Se selecciona audio
                 {
-                    if (cb_Formats.SelectedItem.Equals(".mp3"))
+                    if (ExtensionSeleccionada.Equals(".mp3"))
                     {
                         chk_EmbedThumb.IsEnabled = true;
                     }
@@ -908,8 +961,6 @@ namespace Media_Downloader
                         chk_EmbedThumb.IsChecked = false;
                     }
                 }
-
-
             }
             catch (NullReferenceException) { }
             //Esto es horrible, pero pega un error completamente normal cuando se cambia los items de este combobox
@@ -924,11 +975,12 @@ namespace Media_Downloader
             MainPath = AppDomain.CurrentDomain.BaseDirectory;
             PresetsFilePath = AppDomain.CurrentDomain.BaseDirectory + @"Presets.XML";
 
+
+
             //Si no existe la carpeta de Youtube.dl da un aviso y cierra el programa
             if (!Directory.Exists(YoutubedlPath))
             {
-                MessageBox.Show("El programa no puede encontrar la carpeta con todos los archivos necesarios para funcionar." +
-                    "\nAsegurate que la carpeta \"youtube-dl\" esta en la mismo directorio que este programa.", "Faltan Archivos", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(Properties.Strings.NoYTDLExmsg, Properties.Strings.NoYTDLExtitle, MessageBoxButton.OK, MessageBoxImage.Error);
                 MainPanel.IsEnabled = false;
                 Environment.Exit(1);
             }
@@ -964,7 +1016,8 @@ namespace Media_Downloader
                 LoadPreset(Presets[0]);
             }
             LoadPresetMenu(Presets);
-
+            //TODO mirar si esto es necesario
+            Seleccion_click();
             RefrescarComando();
         }
         private void Txt_URL_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -972,12 +1025,29 @@ namespace Media_Downloader
             txt_URL.Text = Clipboard.GetText();
             RefrescarComando();
         }
+
+        /*private void CultureChange(string cultureID)
+        {
+
+            System.Globalization.CultureInfo culture = new System.Globalization.CultureInfo(cultureID);
+
+            Thread.CurrentThread.CurrentUICulture = culture;
+            Thread.CurrentThread.CurrentCulture = culture;
+
+            var oldwindow = Application.Current.MainWindow;
+
+            Application.Current.MainWindow = new MainWindow(this.DataContext);
+            Application.Current.MainWindow.Show();
+
+            oldwindow.Close();
+
+        }*/
         #endregion
 
         #region El rincon oscuro del dev
         private void GUI_DEV_TEST(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("J̶͎̞͔̙̘͍̱͒̾̾͗̄̇̆̓̚͡E̸̙̼͌̐͑͆͡J̶̴̘̦͔͕̼̲̱͂ͮ̐̉Ỏ̭̤̗̥̩̼̻̣̥͋ͧJ̱͌ͮͨ̏Ě̷̛͎̝̭̭̺̤̅̅̒ͨ̚͝J̠͉̱͇̣̍̀͊ͪ͆ͮ̚͢O̵̵̘̣͇ͣͮ͑̃̓ͪ͜", @"º̶̈́̓҉̱̮̥͖̝̯͈͖͙ª̝̥̫̘̪ͭͤ̈̈́́̅ͭ·̡̟̫̙͉̬̼͎̻͋ͪ̉́͜&̼̺̰̥̘͋̓̓ͥ̃̂͗̃͝%̛͍̲̝̬̒ͤ̀͟$̧͈̼͚̭̝͈̱̤ͨ̒̇͒͊ͤ̓͡^͔̘̤̳̼̬̅̉͋͆͝¨̩͚̺̐̾̀*̫̘ͤ̃̏̑̏̂́Çͬ͛̊͜͜͏̫̬̻͕̳̙̜;̨͖͇̫͈̤ͦ_̡͖̭̜̲͔͎̳̆͛̿ͯͮͬ̆̕+ͨ̏̄̑͆̍̅̀͏͙̪̦͚͈-ͤ̔̿ͥ҉̟͍̖̙̘̥̳̪́¡̴̙̳̻̩̣̼̠̳̫ͯͬͣ̌̊ͩͭ́'̸͕͚̗̓̒̔͝·̢̗̙̯̱͍͕̱̦̬̍̊̽͟%̖͎͉̯͔̦̹͙ͬ̀ͧ̏̌̓ͮ́$̸̬̼͚̜̰̭͖̥̊̒̏̇͛͠·͕͙̿͌͂̀͊ͬ͠^̩̪̈ͪ͘*͈̱̱̫̘̩͙̞̊ͬ͗̒ͨ͠ͅ¨̼̟͑̓ͥͦͧ̑̌͘͡͞;̴̡͓͖͈̥̮̼ͧͪ͛͛̄̑ͬ͜+̩͉̟̭ͬͭ͗̇̍̄͌ͭ?̸̷̠̖͎̦̭͆̂̅̑ͬ͗̃ͣ͠'͇̪͈͚̳̦͊ͮ͛ͤ͛̇ͭ͟¡̧̣̯̜̩̔̾ͤͩ", MessageBoxButton.YesNoCancel, MessageBoxImage.Error);
+            //MessageBox.Show("J̶͎̞͔̙̘͍̱͒̾̾͗̄̇̆̓̚͡E̸̙̼͌̐͑͆͡J̶̴̘̦͔͕̼̲̱͂ͮ̐̉Ỏ̭̤̗̥̩̼̻̣̥͋ͧJ̱͌ͮͨ̏Ě̷̛͎̝̭̭̺̤̅̅̒ͨ̚͝J̠͉̱͇̣̍̀͊ͪ͆ͮ̚͢O̵̵̘̣͇ͣͮ͑̃̓ͪ͜", @"º̶̈́̓҉̱̮̥͖̝̯͈͖͙ª̝̥̫̘̪ͭͤ̈̈́́̅ͭ·̡̟̫̙͉̬̼͎̻͋ͪ̉́͜&̼̺̰̥̘͋̓̓ͥ̃̂͗̃͝%̛͍̲̝̬̒ͤ̀͟$̧͈̼͚̭̝͈̱̤ͨ̒̇͒͊ͤ̓͡^͔̘̤̳̼̬̅̉͋͆͝¨̩͚̺̐̾̀*̫̘ͤ̃̏̑̏̂́Çͬ͛̊͜͜͏̫̬̻͕̳̙̜;̨͖͇̫͈̤ͦ_̡͖̭̜̲͔͎̳̆͛̿ͯͮͬ̆̕+ͨ̏̄̑͆̍̅̀͏͙̪̦͚͈-ͤ̔̿ͥ҉̟͍̖̙̘̥̳̪́¡̴̙̳̻̩̣̼̠̳̫ͯͬͣ̌̊ͩͭ́'̸͕͚̗̓̒̔͝·̢̗̙̯̱͍͕̱̦̬̍̊̽͟%̖͎͉̯͔̦̹͙ͬ̀ͧ̏̌̓ͮ́$̸̬̼͚̜̰̭͖̥̊̒̏̇͛͠·͕͙̿͌͂̀͊ͬ͠^̩̪̈ͪ͘*͈̱̱̫̘̩͙̞̊ͬ͗̒ͨ͠ͅ¨̼̟͑̓ͥͦͧ̑̌͘͡͞;̴̡͓͖͈̥̮̼ͧͪ͛͛̄̑ͬ͜+̩͉̟̭ͬͭ͗̇̍̄͌ͭ?̸̷̠̖͎̦̭͆̂̅̑ͬ͗̃ͣ͠'͇̪͈͚̳̦͊ͮ͛ͤ͛̇ͭ͟¡̧̣̯̜̩̔̾ͤͩ", MessageBoxButton.YesNoCancel, MessageBoxImage.Error);
         }
 
         private void GUI_DEV_LoadPresetsFromFile(object sender, RoutedEventArgs e) => Presets = LoadPresetsFromFile(PresetsFilePath);
@@ -1013,8 +1083,19 @@ namespace Media_Downloader
         {
             Verbose = !Verbose;
         }
+
         #endregion
 
+        private void CambiarAEspanyol(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.Idioma = "es-ES";
+            MessageBox.Show("Por favor reinicia la aplicacion para aplicar los cambios","Reinicio Necesario", MessageBoxButton.OK,MessageBoxImage.Information);
+        }
 
+        private void CambiarAIngles(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.Idioma = "en-US";
+            MessageBox.Show("Please restart the application to apply the changes", "Restart", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
     }
 }

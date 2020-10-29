@@ -73,7 +73,7 @@ namespace Media_Downloader
             Quiet = false;
             Download_thumbnails = false;
             Download_subs = false;
-chrome://vivaldi-webui/startpage?section=Speed-dials&activeSpeedDialIndex=0&background-color=#412d38            Embed_thumb = false;
+            Embed_thumb = false;
             Embed_subs = false;
             Extension = "mp4";
             DownloadPath = AppDomain.CurrentDomain.BaseDirectory + @"Descargas";

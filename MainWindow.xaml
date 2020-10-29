@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:p = "clr-namespace:Media_Downloader.Properties"
         xmlns:local="clr-namespace:Media_Downloader"
         mc:Ignorable="d"
         Title="Media Downloader" 
@@ -18,7 +19,7 @@
         <StatusBar DockPanel.Dock="Bottom">
 
             <StatusBarItem HorizontalAlignment="Left">
-                <TextBlock Name="StatusBar" Text="Listo"/>
+                <TextBlock Name="StatusBar" Text="{x:Static p:Strings.Listo}"/>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right" Visibility="Hidden">
                 <ProgressBar Width="500" Height="16" IsIndeterminate="True"/>
@@ -26,25 +27,31 @@
         </StatusBar>
         <!--Main Menu-->
         <Menu Name="MainMenu" IsMainMenu="True" DockPanel.Dock="Top">
-            <MenuItem Header="Opciones">
-                <MenuItem Header="Actualizar" Click="MenuItem_ActualizarYTdl">
+            <MenuItem Header="{x:Static p:Strings.Opciones}">
+                <MenuItem Header="{x:Static p:Strings.Actualizar}" Click="MenuItem_ActualizarYTdl">
                     <MenuItem.Icon>
                         <Image Source="Resources\update.png"/>
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="{x:Static p:Strings.Idiomas}">
+                    <MenuItem Header="{x:Static p:Strings.Español}" Click="CambiarAEspanyol" Icon="🇺🇸"/>
+
+                    <MenuItem Header="{x:Static p:Strings.Ingles}" Click="CambiarAIngles" Icon="🇪🇸"/>
+                </MenuItem>
             </MenuItem>
-            <MenuItem Name="Menu_presets" Header="Presets">
-                <MenuItem Header="Añadir Preset" Click="AddPreset"/>
+            <MenuItem Name="Menu_presets" Header="{x:Static p:Strings.Presets}">
+                <MenuItem Header="{x:Static p:Strings.Añadir_Preset}" Click="AddPreset"/>
                 <Separator/>
+                <!--esto puede quedar estatico por que realmente da igual-->
                 <MenuItem Header="Preset Example">
                     <MenuItem Header="Usar"/>
                     <MenuItem Header="Usar como predeterminada"/>
                     <MenuItem Header="Borrar"/>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="Acerca de">
-                <MenuItem Header="Version" Click="MenuItem_CheckVersion"/>
-                <MenuItem Header="Sitios Soportados" Click="MenuItem_SitiosSoportados" ToolTip="Abrira un explorador web">
+            <MenuItem Header="{x:Static p:Strings.Acerca_de}">
+                <MenuItem Header="{x:Static p:Strings.Version}" Click="MenuItem_CheckVersion"/>
+                <MenuItem Header="{x:Static p:Strings.Sitios_Soportados}" Click="MenuItem_SitiosSoportados" ToolTip="{x:Static p:Strings.TTSitiosSoportados}">
                     <MenuItem.Icon>
                         <Image Source="Resources\external-link.png"/>
                     </MenuItem.Icon>
@@ -68,8 +75,21 @@
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" VerticalAlignment="Center" >
             <Label Content="URL:" VerticalAlignment="Center"/>
-            <TextBox MinWidth="500" Name="txt_URL" MaxWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="Click Derecho para pegar" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" />
-            <ComboBox Name="cb_Formats"  Margin="2" MinWidth="70"  DropDownClosed="Cb_Formats_DropDownClosed"/>
+            <TextBox MinWidth="500" Text="{Binding ExtensionSeleccionada, UpdateSourceTrigger=PropertyChanged}" Name="txt_URL" MaxWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="{x:Static p:Strings.TTURL}" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" />
+            <ComboBox Name="cb_Formats_Video" Margin="2" MinWidth="70" Visibility="Collapsed" Text="{Binding ExtensionSeleccionada}" DropDownClosed="Cb_Formats_DropDownClosed" SelectionChanged="cb_Formats_SelectionChanged">
+                <ComboBoxItem Content="mp4"/>
+                <ComboBoxItem Content="avi"/>
+                <ComboBoxItem Content="mkv"/>
+                <ComboBoxItem Content="webm"/>
+            </ComboBox>
+            <ComboBox Name="cb_Formats_Audio" Margin="2" MinWidth="70" Visibility="Collapsed"
+                      DropDownClosed="Cb_Formats_DropDownClosed" Text="{Binding ExtensionSeleccionada}" SelectionChanged="cb_Formats_SelectionChanged">
+                <ComboBoxItem Content="mp3"/>
+                <ComboBoxItem Content="flac"/>
+                <ComboBoxItem Content="aac"/>
+                <ComboBoxItem Content="m4a"/>
+                <ComboBoxItem Content="wav"/>
+            </ComboBox>
             <RadioButton GroupName="FormatOptions" Name="rb_Video" Content="Video"  Margin="10,0,0,0" IsChecked="{Binding IsVideo}"  VerticalAlignment="Center"/>
             <RadioButton GroupName="FormatOptions" Name="rb_Audio" Content="Audio"  Margin="10,0,0,0"  IsChecked="{Binding IsAudio}"   VerticalAlignment="Center"/>
 
@@ -84,16 +104,16 @@
             <StackPanel Orientation="Vertical" >
 
                 <!--Playlist Options-->
-                <GroupBox Header="Opciones de lista" Grid.Column="0" >
+                <GroupBox Header="{x:Static p:Strings.Opciones_de_lista}" Grid.Column="0" >
                     <StackPanel Orientation="Vertical">
-                        <CheckBox  Content="Playlist" Margin="0,5,0,3" IsChecked="{Binding IsPlaylist}"  />
+                        <CheckBox  Content="{x:Static p:Strings.Playlist}" Margin="0,5,0,3" IsChecked="{Binding IsPlaylist}"  />
                         <StackPanel Orientation="Horizontal">
                             <!--Los Text de las Textbox se convierten a Int en el propio codigo-->
-                            <CheckBox Name="chk_startsAt" Content="Empezar por:" IsChecked="{Binding StartsAt}" Margin="4" />
+                            <CheckBox Name="chk_startsAt" Content="{x:Static p:Strings.Empezar_por_}" IsChecked="{Binding StartsAt}" Margin="4" />
                             <TextBox Name="txt_startsAt" Text="{Binding StartsAtInt, UpdateSourceTrigger=PropertyChanged}" MinWidth="75" Width="Auto" Margin="4" KeyUp="GUI_RefrescarComando_KeyUp"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox Name="chk_endsAt" Content="Terminar por:" IsChecked="{Binding EndsAt}" Margin="4" />
+                            <CheckBox Name="chk_endsAt" Content="{x:Static p:Strings.Terminar_por_}" IsChecked="{Binding EndsAt}" Margin="4" />
                             <TextBox Name="txt_endsAt" Text="{Binding EndsAtInt, UpdateSourceTrigger=PropertyChanged}" MinWidth="75" Width="Auto" Margin="4" KeyUp="GUI_RefrescarComando_KeyUp"/>
                         </StackPanel>
                     </StackPanel>
@@ -103,29 +123,28 @@
             <!--Extras-->
             <GroupBox Header="Extras" Grid.Column="1">
                 <StackPanel Orientation="Vertical">
-                    <CheckBox IsChecked="{Binding Quiet}" Content="Silencioso" ToolTip="Evita que aparezca la interfaz de comandos" Margin="4" />
-                    <CheckBox IsChecked="{Binding Download_thumbnails}" Content="Descargar Miniaturas" ToolTip="Se usara la miniatura del video como miniatura del archivo" Margin="4" />
-                    <CheckBox IsChecked="{Binding Download_subs}" Content="Descargar Subtitulos" Margin="4" ToolTip="Descargar un archivo con subtitulos" />
+                    <CheckBox IsChecked="{Binding Quiet}" Content="{x:Static p:Strings.Silencioso}" ToolTip="{x:Static p:Strings.TTSilencioso}" Margin="4" />
+                    <CheckBox IsChecked="{Binding Download_thumbnails}" Content="{x:Static p:Strings.Descargar_Miniaturas}" ToolTip="{x:Static p:Strings.TTDescargarMiniaturas}" Margin="4" />
+                    <CheckBox IsChecked="{Binding Download_subs}" Content="{x:Static p:Strings.Descargar_Subtitulos}" Margin="4" ToolTip="{x:Static p:Strings.TTDescargar_Subtitulos}" />
                 </StackPanel>
             </GroupBox>
 
             <!--Solo Video-->
-            <GroupBox Header="Integraciones" Grid.Column="2">
+            <GroupBox Header="{x:Static p:Strings.Integraciones}" Grid.Column="2">
                 <StackPanel Orientation="Vertical">
-                    <CheckBox IsChecked="{Binding Embed_thumbnails}" Name="chk_EmbedThumb" Content="Integrar Miniatura" ToolTip="Integra la minuatura dentro del propio video descargado (Solo MP3 y MP4)" Margin="4" />
-                    <CheckBox IsChecked="{Binding Embed_subs}" Name="chk_Embedsubs" Content="Integrar Subtitulos" Margin="4" ToolTip="Integrara los subitulos dentro del video (Solo Ciertos formatos)"/>
+                    <CheckBox IsChecked="{Binding Embed_thumbnails}" Name="chk_EmbedThumb" Content="{x:Static p:Strings.Integrar_Miniatura}" ToolTip="{x:Static p:Strings.TTIntegrar_Miniatura}" Margin="4" />
+                    <CheckBox IsChecked="{Binding Embed_subs}" Name="chk_Embedsubs" Content="{x:Static p:Strings.Integrar_Subtitulos}" Margin="4" ToolTip="{x:Static p:Strings.Integrar_Subtitulos}"/>
                 </StackPanel>
             </GroupBox>
         </Grid>
 
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Margin="0,0,10,10">
-            <Button Name="Btn_AbrirCarpeta" Content="Abrir Carpeta" Click="Btn_AbrirCarpeta_Click" MinHeight="25" MinWidth="80" Margin="5,5,5,5" />
-            <Button Name="Btn_Descargar" Content="Descargar" Click="Btn_Descargar_Click" MinHeight="25" MinWidth="120" Margin="5,5,5,5" />
+            <Button Name="Btn_AbrirCarpeta" HorizontalAlignment="Right" Content="{x:Static p:Strings.Abrir_Carpeta}" Click="Btn_AbrirCarpeta_Click" MinHeight="25" MinWidth="80" Margin="5,5,5,5" />
+            <Button Name="Btn_Descargar" HorizontalAlignment="Right"  Content="{x:Static p:Strings.Descargar}" Click="Btn_Descargar_Click" MinHeight="25" MinWidth="120" Margin="5,5,5,5" />
         </StackPanel>
-        <Expander Header="(Avanzado) - Ver Comando final" ExpandDirection="Up" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Margin="4,4,4,0"
+        <Expander Header="{x:Static p:Strings.Ver_Comando_Final}" ExpandDirection="Up" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Margin="4,4,4,0"
                   Expanded="GUI_RefrescarComando_Click">
             <TextBox Name="txt_Comando" Margin="4" Height="20" Text="{Binding Argumentos}"/>
         </Expander>
-
     </DockPanel>
 </Window>
