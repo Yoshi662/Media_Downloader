@@ -75,7 +75,7 @@
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5" VerticalAlignment="Center" >
             <Label Content="URL:" VerticalAlignment="Center"/>
-            <TextBox MinWidth="500" Text="{Binding ExtensionSeleccionada, UpdateSourceTrigger=PropertyChanged}" Name="txt_URL" MaxWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="{x:Static p:Strings.TTURL}" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" />
+            <TextBox MinWidth="500" Name="txt_URL" MaxWidth="500" Margin="2" KeyUp="GUI_RefrescarComando_KeyUp" ToolTip="{x:Static p:Strings.TTURL}" MouseRightButtonUp="Txt_URL_MouseRightButtonUp" />
             <ComboBox Name="cb_Formats_Video" Margin="2" MinWidth="70" Visibility="Collapsed" Text="{Binding ExtensionSeleccionada}" DropDownClosed="Cb_Formats_DropDownClosed" SelectionChanged="cb_Formats_SelectionChanged">
                 <ComboBoxItem Content="mp4"/>
                 <ComboBoxItem Content="avi"/>
