@@ -33,7 +33,7 @@ namespace Media_Downloader
 
         #region Arguments, Fields and other pseudostatic thingies
         //Version
-        private readonly String CurrentVersion = "0.7.1a";
+        private readonly String CurrentVersion = "0.7.2a";
 
         //Youtube-dl
         Process Youtube_dl = new Process();
@@ -608,7 +608,6 @@ namespace Media_Downloader
             {
                 String exttemp = ((sender as ComboBox).SelectedItem as ComboBoxItem).Content.ToString();
                 ExtensionSeleccionada = exttemp;
-                txt_URL.Text = exttemp;
             }
 
         }
