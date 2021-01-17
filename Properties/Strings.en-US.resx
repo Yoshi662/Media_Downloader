@@ -129,8 +129,10 @@
   <data name="Añadir Preset" xml:space="preserve">
     <value>Add preset</value>
   </data>
-  <data name="Bonico" xml:space="preserve">
-    <value>\n\nNo idea what this is</value>
+  <data name="Bonico" xml:space="preserve"><!-- Developer nonsense. Better leave it blank !-->
+
+    <value></value>
+    
   </data>
   <data name="Borrar" xml:space="preserve">
     <value>Delete</value>
